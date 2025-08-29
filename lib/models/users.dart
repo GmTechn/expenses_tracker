@@ -1,35 +1,43 @@
-import 'package:flutter/material.dart';
-
 class User {
   final int? id;
-  final String username;
+  final String fname;
+  final String lname;
   final String email;
   final String password;
-  final String confirmpassword;
+  final String phone;
+  final String photoPath;
 
-  User(
-      {required this.id,
-      required this.username,
-      required this.email,
-      required this.password,
-      required this.confirmpassword});
+  User({
+    this.id,
+    required this.fname,
+    required this.lname,
+    required this.email,
+    required this.password,
+    this.phone = '',
+    this.photoPath = '',
+  });
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'username': username,
+      'fname': fname,
+      'lname': lname,
       'email': email,
       'password': password,
-      'confirmpassword': confirmpassword,
+      'phone': phone,
+      'photoPath': photoPath,
     };
   }
 
   factory User.fromMap(Map<String, dynamic> map) {
     return User(
-        id: map['id'],
-        username: map['username'],
-        email: map['email'],
-        password: map['password'],
-        confirmpassword: map['confirmpassword']);
+      id: map['id'],
+      fname: map['fname'],
+      lname: map['lname'],
+      email: map['email'],
+      password: map['password'],
+      phone: map['phone'],
+      photoPath: map['photoPath'],
+    );
   }
 }

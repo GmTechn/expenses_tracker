@@ -1,0 +1,122 @@
+import 'package:expenses_tracker/pages/dashboard.dart';
+import 'package:expenses_tracker/pages/mycards.dart';
+import 'package:expenses_tracker/pages/transactions.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:expenses_tracker/pages/profile.dart';
+
+class MyNavBar extends StatelessWidget {
+  MyNavBar({Key? key, required this.currentIndex}) : super(key: key);
+
+  final int currentIndex;
+  final primaryColor = const Color(0xff4338CA);
+  final secondaryColor = const Color(0xff6D28D9);
+  final accentColor = const Color(0xffffffff);
+  final backgroundColor = const Color(0xffffffff);
+  final errorColor = const Color(0xffEF4444);
+
+  @override
+  Widget build(BuildContext context) {
+    return BottomAppBar(
+      color: Colors.white,
+      child: SizedBox(
+        height: 56,
+        width: MediaQuery.of(context).size.width,
+        child: Padding(
+          padding: const EdgeInsets.only(left: 25.0, right: 25.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconBottomBar(
+                text: "Home",
+                icon: CupertinoIcons.house_fill,
+                selected: currentIndex == 0,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Dashboard()),
+                  );
+                },
+              ),
+              IconBottomBar(
+                text: "Transactions",
+                icon: CupertinoIcons.money_dollar_circle_fill,
+                selected: currentIndex == 1,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => TransactionsPage()),
+                  );
+                },
+              ),
+              IconBottomBar(
+                text: "Cards",
+                icon: CupertinoIcons.creditcard_fill,
+                selected: currentIndex == 2,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MyCardsPage()),
+                  );
+                },
+              ),
+              IconBottomBar(
+                text: "Profile",
+                icon: CupertinoIcons.person_fill,
+                selected: currentIndex == 3,
+                onPressed: () {
+                  Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ProfilePage(email: '')));
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class IconBottomBar extends StatelessWidget {
+  const IconBottomBar({
+    Key? key,
+    required this.text,
+    required this.icon,
+    required this.selected,
+    required this.onPressed,
+  }) : super(key: key);
+
+  final String text;
+  final IconData icon;
+  final bool selected;
+  final Function() onPressed;
+
+  final primaryColor = const Color(0xff050C20);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          onPressed: onPressed,
+          icon: Icon(
+            icon,
+            size: selected ? 30 : 25, // 👈 Profile icon gets bigger
+            color: selected ? primaryColor : Colors.black54,
+          ),
+        ),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            height: .1,
+            color: selected ? primaryColor : Colors.grey.withOpacity(.75),
+          ),
+        ),
+      ],
+    );
+  }
+}
