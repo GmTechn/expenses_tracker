@@ -1,13 +1,16 @@
-import 'package:expenses_tracker/components/mycards.dart';
-import 'package:expenses_tracker/pages/dashboard.dart';
+import 'package:expenses_tracker/management/database.dart';
 import 'package:expenses_tracker/pages/login.dart';
+import 'package:expenses_tracker/pages/signup.dart';
+import 'package:expenses_tracker/services/listofusers.dart';
+import 'package:flutter/material.dart';
+import 'package:expenses_tracker/pages/dashboard.dart';
+import 'package:expenses_tracker/pages/transactions.dart';
 import 'package:expenses_tracker/pages/mycards.dart';
 import 'package:expenses_tracker/pages/profile.dart';
-import 'package:expenses_tracker/pages/signup.dart';
-import 'package:expenses_tracker/pages/transactions.dart';
-import 'package:flutter/material.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await DatabaseManager().initialisation();
   runApp(const MyApp());
 }
 
@@ -18,24 +21,51 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Expense Tracker',
+      title: 'Expenses Tracker',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+        primarySwatch: Colors.blue,
       ),
-      initialRoute: '/login',
+      initialRoute: '/',
       routes: {
-        '/login': (context) => const LoginPage(),
-        '/signup': (context) => const SignUpPage(),
-        '/dashboard': (context) => const Dashboard(),
-        '/transactions': (context) => const TransactionsPage(),
-        '/wallet': (context) => const MyCardsPage(),
+        '/': (context) => const LoginPage(),
+        // You can handle navigation with email using onGenerateRoute
+      },
+      onGenerateRoute: (settings) {
+        final args = settings.arguments as Map<String, dynamic>?;
 
-        // ✅ FIX: Pass email to ProfilePage via arguments
-        '/profile': (context) {
-          final email = ModalRoute.of(context)!.settings.arguments as String;
-          return ProfilePage(email: email);
-        },
+        switch (settings.name) {
+          case '/signup':
+            return MaterialPageRoute(
+              builder: (_) => SignUpPage(),
+            );
+          case '/dashboard':
+            return MaterialPageRoute(
+              builder: (_) => Dashboard(),
+            );
+          case '/transactions':
+            return MaterialPageRoute(
+              builder: (_) => TransactionsPage(
+                email: args?['email'] ?? '',
+              ),
+            );
+          case '/mycards':
+            return MaterialPageRoute(
+              builder: (_) => MyCardsPage(),
+            );
+          case '/profile':
+            return MaterialPageRoute(
+              builder: (_) => ProfilePage(
+                email: args?['email'],
+              ),
+            );
+          case '/usersList':
+            return MaterialPageRoute(
+              builder: (_) => ListOfUsers(),
+            );
+
+          default:
+            return null;
+        }
       },
     );
   }

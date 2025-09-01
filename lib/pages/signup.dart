@@ -57,7 +57,7 @@ class _SignUpPageState extends State<SignUpPage> {
         return;
       }
 
-      final newUser = User(
+      final newUser = AppUser(
         fname: fname,
         lname: lname,
         email: email,
@@ -65,7 +65,7 @@ class _SignUpPageState extends State<SignUpPage> {
         phone: phone,
       );
 
-      await _dbManager.insertUser(newUser);
+      await _dbManager.insertAppUser(newUser);
 
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/dashboard');

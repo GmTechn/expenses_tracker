@@ -45,7 +45,10 @@ class MyNavBar extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => TransactionsPage()),
+                    MaterialPageRoute(
+                        builder: (context) => TransactionsPage(
+                              email: '',
+                            )),
                   );
                 },
               ),

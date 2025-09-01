@@ -1,8 +1,10 @@
+import 'package:expenses_tracker/components/mybutton.dart';
 import 'package:expenses_tracker/components/mycards.dart';
 import 'package:expenses_tracker/components/mynavbar.dart';
 import 'package:expenses_tracker/components/mytransaction.dart';
 import 'package:expenses_tracker/models/users.dart';
 import 'package:expenses_tracker/pages/login.dart';
+import 'package:expenses_tracker/services/listofusers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
@@ -50,6 +52,16 @@ class _DashboardState extends State<Dashboard> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
+                  MyButton(
+                      textbutton: 'Users',
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ListOfUsers()));
+                      },
+                      buttonHeight: 40,
+                      buttonWidth: 80),
                   const SizedBox(
                     width: 40,
                   ),

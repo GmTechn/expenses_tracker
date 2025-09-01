@@ -29,7 +29,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final picker = ImagePicker();
   final _dbManager = DatabaseManager();
 
-  User? _user;
+  AppUser? _user;
 
   @override
   void initState() {
@@ -70,7 +70,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _updateProfile() async {
     if (_user == null) return;
 
-    final updatedUser = User(
+    final updatedUser = AppUser(
       id: _user!.id,
       fname: _username.text,
       lname: _user!.lname,
@@ -80,7 +80,14 @@ class _ProfilePageState extends State<ProfilePage> {
       photoPath: _photoPath ?? '',
     );
 
-    await _dbManager.updateUser(_user!.email, updatedUser);
+    await _dbManager.updateAppUser(AppUser(
+        id: _user!.id,
+        fname: _username.text,
+        lname: _user!.lname,
+        email: _user!.email,
+        password: _user!.password,
+        phone: _phoneNumber.text,
+        photoPath: _photoPath ?? ''));
 
     showDialog(
       context: context,

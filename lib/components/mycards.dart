@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:expenses_tracker/management/database.dart';
 
 class MyCards extends StatelessWidget {
   MyCards(
@@ -20,8 +19,6 @@ class MyCards extends StatelessWidget {
   final Color colorTwo;
 
   //calling the database
-
-  final DatabaseManager _dataBaseManager = DatabaseManager();
 
   @override
   Widget build(BuildContext context) {
@@ -84,9 +81,7 @@ class MyCards extends StatelessWidget {
           Text(
             username,
             style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
+                fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
           )
         ],
       ),

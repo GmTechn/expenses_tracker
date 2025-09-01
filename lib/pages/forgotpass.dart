@@ -9,9 +9,9 @@ class ForgotPasswordPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final emailController = TextEditingController();
-    final DatabaseManager _dbManager = DatabaseManager();
+    final DatabaseManager dbManager = DatabaseManager();
 
-    Future<void> resetPassword() async {
+    Future<void> _sendResetLink() async {
       final email = emailController.text.trim();
 
       if (email.isEmpty) {
@@ -21,26 +21,18 @@ class ForgotPasswordPage extends StatelessWidget {
         return;
       }
 
-      try {
-        final user = await _dbManager.getUserByEmail(email);
-        if (user == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No account found with this email.')),
-          );
-          return;
-        }
-
-        // Here you would normally send a reset link via email.
-        // For now, just simulate success.
+      final user = await dbManager.getUserByEmail(email);
+      if (user == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reset link sent to $email')),
+          const SnackBar(content: Text('No account found with this email!')),
         );
-        emailController.clear();
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        return;
       }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Reset link sent to $email')),
+      );
+      // Note: since we're using local DB, you may later add actual email service.
     }
 
     return Scaffold(
@@ -56,7 +48,7 @@ class ForgotPasswordPage extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 40),
-            const Icon(Icons.lock, size: 40, color: Color(0xff050c20)),
+            const Icon(Icons.lock, size: 40),
             const SizedBox(height: 20),
             const Text(
               'Enter your email to reset password:',
@@ -72,7 +64,7 @@ class ForgotPasswordPage extends StatelessWidget {
             const SizedBox(height: 40),
             MyButton(
               textbutton: 'Send reset link',
-              onTap: resetPassword,
+              onTap: _sendResetLink,
               buttonHeight: 40,
               buttonWidth: 200,
             ),

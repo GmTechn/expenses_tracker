@@ -1,4 +1,4 @@
-class User {
+class AppUser {
   final int? id;
   final String fname;
   final String lname;
@@ -7,7 +7,7 @@ class User {
   final String phone;
   final String photoPath;
 
-  User({
+  AppUser({
     this.id,
     required this.fname,
     required this.lname,
@@ -29,8 +29,8 @@ class User {
     };
   }
 
-  factory User.fromMap(Map<String, dynamic> map) {
-    return User(
+  factory AppUser.fromMap(Map<String, dynamic> map) {
+    return AppUser(
       id: map['id'],
       fname: map['fname'],
       lname: map['lname'],
