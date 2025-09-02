@@ -2,6 +2,7 @@ import 'package:expenses_tracker/components/mybutton.dart';
 import 'package:expenses_tracker/components/mycards.dart';
 import 'package:expenses_tracker/components/mynavbar.dart';
 import 'package:expenses_tracker/components/mytransaction.dart';
+import 'package:expenses_tracker/management/database.dart';
 import 'package:expenses_tracker/models/users.dart';
 import 'package:expenses_tracker/pages/login.dart';
 import 'package:expenses_tracker/services/listofusers.dart';
@@ -11,15 +12,39 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
 class Dashboard extends StatefulWidget {
-  const Dashboard({super.key});
+  const Dashboard({
+    super.key,
+  });
 
   @override
   State<Dashboard> createState() => _DashboardState();
 }
 
 class _DashboardState extends State<Dashboard> {
-  //username display
-  String username = 'Gabrielle Mutunda';
+  final DatabaseManager _databaseManager = DatabaseManager();
+
+  AppUser? _currentUser; // ✅ Store logged-in user
+
+  @override
+  void initState() {
+    super.initState();
+    _initDb();
+  }
+
+  Future<void> _initDb() async {
+    await _databaseManager.initialisation();
+    await _loadCurrentUser();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    // ⚡ For now, fetch the first user in DB
+    final users = await _databaseManager.getAllAppUsers();
+    if (users.isNotEmpty) {
+      setState(() {
+        _currentUser = users.first; // later you can replace with logged-in user
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,31 +77,26 @@ class _DashboardState extends State<Dashboard> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  MyButton(
-                      textbutton: 'Users',
-                      onTap: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => ListOfUsers()));
-                      },
-                      buttonHeight: 40,
-                      buttonWidth: 80),
-                  const SizedBox(
-                    width: 40,
-                  ),
+                  const SizedBox(width: 40),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Welcome back,',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         Row(
                           children: [
-                            Text(username),
-                            const Text('!'),
+                            Text(
+                              _currentUser != null
+                                  ? "${_currentUser!.fname} ${_currentUser!.lname}"
+                                  : "Guest",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -109,23 +129,21 @@ class _DashboardState extends State<Dashboard> {
                 ],
               ),
 
-              const SizedBox(
-                height: 20,
-              ),
+              const SizedBox(height: 20),
 
               // Card
               MyCards(
                 amount: '\$542.45',
                 cardnumber: "5412 7512 3412 3456",
                 expirydate: '12/25',
-                username: username,
                 colorOne: const Color.fromARGB(255, 5, 77, 113),
                 colorTwo: Colors.amber.withOpacity(.5),
+                username: _currentUser != null
+                    ? "${_currentUser!.fname} ${_currentUser!.lname}"
+                    : "User",
               ),
 
-              const SizedBox(
-                height: 20,
-              ),
+              const SizedBox(height: 20),
 
               // Income & Expenses
               Row(
@@ -142,9 +160,7 @@ class _DashboardState extends State<Dashboard> {
                           color: Colors.white,
                         ),
                       ),
-                      const SizedBox(
-                        height: 8,
-                      ),
+                      const SizedBox(height: 8),
                       const Text(
                         '+\$250 Income',
                         style: TextStyle(
@@ -163,9 +179,7 @@ class _DashboardState extends State<Dashboard> {
                           color: Colors.white,
                         ),
                       ),
-                      const SizedBox(
-                        height: 8,
-                      ),
+                      const SizedBox(height: 8),
                       const Text(
                         '-\$50 Expense',
                         style: TextStyle(
@@ -176,9 +190,7 @@ class _DashboardState extends State<Dashboard> {
                 ],
               ),
 
-              const SizedBox(
-                height: 20,
-              ),
+              const SizedBox(height: 20),
 
               // Transactions title
               const Text(
@@ -188,9 +200,7 @@ class _DashboardState extends State<Dashboard> {
                     color: Color(0xff050c20),
                     fontSize: 18),
               ),
-              const SizedBox(
-                height: 10,
-              ),
+              const SizedBox(height: 10),
 
               // Transactions list
               const Mytransaction(
@@ -209,15 +219,32 @@ class _DashboardState extends State<Dashboard> {
                   title: 'Interact Transfert',
                   date: '02 Mai 2025',
                   amount: 200),
+
+              // Inside MyButton (Users button) in Dashboard
+              MyButton(
+                textbutton: 'Users',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ListOfUsers()),
+                  ).then((_) {
+                    // 🔥 Reload user when coming back
+                    _loadCurrentUser();
+                  });
+                },
+                buttonHeight: 40,
+                buttonWidth: 80,
+              ),
             ],
           ),
         ),
       ),
 
       // ⬇️ Bottom navigation stays fixed
-
       bottomNavigationBar: MyNavBar(
         currentIndex: 0,
+        email: '',
       ),
     );
   }

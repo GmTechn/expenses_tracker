@@ -6,9 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:expenses_tracker/pages/profile.dart';
 
 class MyNavBar extends StatelessWidget {
-  MyNavBar({Key? key, required this.currentIndex}) : super(key: key);
+  MyNavBar({Key? key, required this.currentIndex, required this.email})
+      : super(key: key);
 
   final int currentIndex;
+  final String email;
   final primaryColor = const Color(0xff4338CA);
   final secondaryColor = const Color(0xff6D28D9);
   final accentColor = const Color(0xffffffff);
@@ -32,9 +34,11 @@ class MyNavBar extends StatelessWidget {
                 icon: CupertinoIcons.house_fill,
                 selected: currentIndex == 0,
                 onPressed: () {
-                  Navigator.push(
+                  Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => Dashboard()),
+                    MaterialPageRoute(
+                      builder: (context) => Dashboard(), // required
+                    ),
                   );
                 },
               ),

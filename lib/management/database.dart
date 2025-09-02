@@ -1,9 +1,7 @@
 import 'dart:async';
-
+import 'dart:io';
 import 'package:sqflite/sqflite.dart';
-
 import 'package:path/path.dart';
-
 import 'package:expenses_tracker/models/users.dart';
 
 class DatabaseManager {
@@ -11,45 +9,76 @@ class DatabaseManager {
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    await initialisation(); // auto-init if not ready
+    await initialisation();
     return _database!;
   }
 
   Future<void> initialisation() async {
     _database = await openDatabase(
       join(await getDatabasesPath(), 'users_database.db'),
-      onCreate: (db, version) {
-        return db.execute(
+      version: 2, // ✅ bump version when schema changes
+      onCreate: (db, version) async {
+        await db.execute(
           '''CREATE TABLE users(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             fname TEXT,
             lname TEXT,
-            email TEXT,
+            email TEXT UNIQUE,
             password TEXT,
             phone TEXT,
             photoPath TEXT
           )''',
         );
       },
-      version: 1,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        // ✅ Ensure the users table always exists
+        await db.execute(
+          '''CREATE TABLE IF NOT EXISTS users(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fname TEXT,
+            lname TEXT,
+            email TEXT UNIQUE,
+            password TEXT,
+            phone TEXT,
+            photoPath TEXT
+          )''',
+        );
+      },
     );
   }
 
+  /// ✅ Wipes the entire database (useful for testing)
+  Future<void> clearDatabase() async {
+    final path = join(await getDatabasesPath(), 'users_database.db');
+    if (await File(path).exists()) {
+      await deleteDatabase(path);
+    }
+    _database = null; // force re-init on next call
+  }
+
   Future<List<AppUser>> getAllAppUsers() async {
-    final db = await database; // ✅ instead of _database
+    final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('users');
     return maps.map((map) => AppUser.fromMap(map)).toList();
   }
 
   Future<void> insertAppUser(AppUser user) async {
     final db = await database;
-    await db.insert('users', user.toMap());
+    await db.insert(
+      'users',
+      user.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   Future<void> updateAppUser(AppUser user) async {
     final db = await database;
-    await db
-        .update('users', user.toMap(), where: 'id = ?', whereArgs: [user.id]);
+    await db.update(
+      'users',
+      user.toMap(),
+      where: 'id = ?',
+      whereArgs: [user.id],
+    );
   }
 
   Future<void> deleteAppUser(int id) async {

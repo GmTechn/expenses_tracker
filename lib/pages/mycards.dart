@@ -8,7 +8,10 @@ class MyCardsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: MyNavBar(currentIndex: 2),
+      bottomNavigationBar: MyNavBar(
+        currentIndex: 2,
+        email: '',
+      ),
     );
   }
 }

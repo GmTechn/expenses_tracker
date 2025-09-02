@@ -7,10 +7,17 @@ import 'package:expenses_tracker/pages/dashboard.dart';
 import 'package:expenses_tracker/pages/transactions.dart';
 import 'package:expenses_tracker/pages/mycards.dart';
 import 'package:expenses_tracker/pages/profile.dart';
+import 'package:expenses_tracker/management/database.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await DatabaseManager().initialisation();
+
+  final dbManager = DatabaseManager();
+
+  // ✅ Clear database during testing
+  await dbManager.clearDatabase();
+
+  await dbManager.initialisation();
   runApp(const MyApp());
 }
 
@@ -42,6 +49,7 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => Dashboard(),
             );
+
           case '/transactions':
             return MaterialPageRoute(
               builder: (_) => TransactionsPage(

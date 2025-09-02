@@ -188,6 +188,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
       ),
       bottomNavigationBar: MyNavBar(
         currentIndex: 0,
+        email: '',
       ),
     );
   }

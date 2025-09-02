@@ -253,7 +253,10 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
       ),
-      bottomNavigationBar: MyNavBar(currentIndex: 3),
+      bottomNavigationBar: MyNavBar(
+        currentIndex: 3,
+        email: '',
+      ),
     );
   }
 }

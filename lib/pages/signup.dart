@@ -2,6 +2,7 @@ import 'package:expenses_tracker/components/mybutton.dart';
 import 'package:expenses_tracker/components/mysquaretile.dart';
 import 'package:expenses_tracker/components/mytextfield.dart';
 import 'package:expenses_tracker/management/database.dart';
+import 'package:expenses_tracker/pages/dashboard.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -31,6 +32,16 @@ class _SignUpPageState extends State<SignUpPage> {
   void showMessage(String message) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initDatabase();
+  }
+
+  Future<void> _initDatabase() async {
+    await _dbManager.initialisation();
   }
 
   Future<void> registerUser() async {
@@ -68,7 +79,10 @@ class _SignUpPageState extends State<SignUpPage> {
       await _dbManager.insertAppUser(newUser);
 
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => Dashboard()),
+      );
     } catch (e) {
       showMessage("Registration failed: $e");
     }
@@ -127,7 +141,7 @@ class _SignUpPageState extends State<SignUpPage> {
           ),
           const SizedBox(height: 10),
           const Text(
-            'Create your account here',
+            'Create your account here!',
             style: TextStyle(
               color: Color(0xff050c20),
               fontWeight: FontWeight.w500,
@@ -219,7 +233,7 @@ class _SignUpPageState extends State<SignUpPage> {
               ),
             ],
           ),
-          const SizedBox(height: 60),
+          const SizedBox(height: 30),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

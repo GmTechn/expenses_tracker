@@ -219,7 +219,7 @@ class _LoginPageState extends State<LoginPage> {
                   onTap: _handleAppleSignIn),
             ],
           ),
-          const SizedBox(height: 60),
+          const SizedBox(height: 30),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

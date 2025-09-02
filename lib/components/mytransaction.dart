@@ -17,10 +17,10 @@ class Mytransaction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color.fromARGB(255, 255, 255, 255),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
