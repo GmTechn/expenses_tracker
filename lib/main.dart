@@ -60,7 +60,9 @@ class MyApp extends StatelessWidget {
             );
           case '/mycards':
             return MaterialPageRoute(
-              builder: (_) => MyCardsPage(),
+              builder: (_) => MyCardsPage(
+                email: args?['email'] ?? '',
+              ),
             );
           case '/profile':
             return MaterialPageRoute(

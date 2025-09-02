@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:expenses_tracker/components/mybutton.dart';
 import 'package:expenses_tracker/components/mycards.dart';
 import 'package:expenses_tracker/components/mynavbar.dart';
@@ -5,16 +7,17 @@ import 'package:expenses_tracker/components/mytransaction.dart';
 import 'package:expenses_tracker/management/database.dart';
 import 'package:expenses_tracker/models/users.dart';
 import 'package:expenses_tracker/pages/login.dart';
+import 'package:expenses_tracker/pages/profile.dart';
 import 'package:expenses_tracker/services/listofusers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
 
 class Dashboard extends StatefulWidget {
+  final String email; // ✅ keep the email passed from signup
+
   const Dashboard({
     super.key,
-    required String email,
+    required this.email,
   });
 
   @override
@@ -22,50 +25,75 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
-  final DatabaseManager _databaseManager = DatabaseManager();
+//creating an instance of an appuser = current user
 
-  AppUser? _currentUser; // ✅ Store logged-in user
+  final DatabaseManager _databaseManager = DatabaseManager();
+  AppUser? _currentUser;
 
   @override
   void initState() {
     super.initState();
-    _initDb();
+    _loadUser();
   }
 
-  Future<void> _initDb() async {
+  Future<void> _loadUser() async {
     await _databaseManager.initialisation();
-    await _loadCurrentUser();
-  }
-
-  Future<void> _loadCurrentUser() async {
-    // ⚡ For now, fetch the first user in DB
-    final users = await _databaseManager.getAllAppUsers();
-    if (users.isNotEmpty) {
-      setState(() {
-        _currentUser = users.first; // later you can replace with logged-in user
-      });
-    }
+    final user = await _databaseManager.getUserByEmail(widget.email);
+    setState(() {
+      _currentUser = user;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         leading: IconButton(
-            onPressed: () => Navigator.push(
+            onPressed: () => Navigator.pushReplacement(
                 context, MaterialPageRoute(builder: (context) => LoginPage())),
-            icon: Icon(Icons.arrow_back)),
+            icon: const Icon(Icons.arrow_back)),
         title: const Text(
           'D A S H B O A R D',
           style: TextStyle(color: Color(0xff050c20)),
         ),
         actions: [
           IconButton(
-              onPressed: () {},
-              icon: const Icon(
-                CupertinoIcons.person,
-                color: Colors.white,
-              ))
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProfilePage(email: widget.email),
+                ),
+              );
+            },
+            icon: FutureBuilder<AppUser?>(
+              future: _databaseManager.getUserByEmail(widget.email),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const CircleAvatar(
+                    backgroundColor: Colors.white,
+                    radius: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  );
+                }
+                if (snapshot.hasData && snapshot.data!.photoPath.isNotEmpty) {
+                  final file = File(snapshot.data!.photoPath);
+                  if (file.existsSync()) {
+                    return CircleAvatar(
+                      radius: 18,
+                      backgroundImage: FileImage(file),
+                    );
+                  }
+                }
+                // Default icon if no photo
+                return const Icon(
+                  CupertinoIcons.person,
+                  color: Colors.white,
+                );
+              },
+            ),
+          ),
         ],
       ),
       body: SafeArea(
@@ -74,7 +102,7 @@ class _DashboardState extends State<Dashboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              //top bar of the safearea
+              // Top bar
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
@@ -83,9 +111,9 @@ class _DashboardState extends State<Dashboard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           'Welcome back,',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         Row(
                           children: [
@@ -193,7 +221,6 @@ class _DashboardState extends State<Dashboard> {
 
               const SizedBox(height: 20),
 
-              // Transactions title
               const Text(
                 'Transactions',
                 style: TextStyle(
@@ -203,7 +230,6 @@ class _DashboardState extends State<Dashboard> {
               ),
               const SizedBox(height: 10),
 
-              // Transactions list
               const Mytransaction(
                 logo: 'assets/images/apple.png',
                 title: 'Apple',
@@ -221,7 +247,6 @@ class _DashboardState extends State<Dashboard> {
                   date: '02 Mai 2025',
                   amount: 200),
 
-              // Inside MyButton (Users button) in Dashboard
               MyButton(
                 textbutton: 'Users',
                 onTap: () {
@@ -230,8 +255,7 @@ class _DashboardState extends State<Dashboard> {
                     MaterialPageRoute(
                         builder: (context) => const ListOfUsers()),
                   ).then((_) {
-                    // 🔥 Reload user when coming back
-                    _loadCurrentUser();
+                    _loadUser();
                   });
                 },
                 buttonHeight: 40,
@@ -242,10 +266,10 @@ class _DashboardState extends State<Dashboard> {
         ),
       ),
 
-      // ⬇️ Bottom navigation stays fixed
+      // ✅ Pass the actual email here!
       bottomNavigationBar: MyNavBar(
         currentIndex: 0,
-        email: '',
+        email: widget.email,
       ),
     );
   }

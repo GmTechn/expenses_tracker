@@ -1,3 +1,4 @@
+import 'package:expenses_tracker/pages/dashboard.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -64,20 +65,22 @@ class _SignUpPageState extends State<SignUpPage> {
       }
 
       final newUser = AppUser(
-        fname: fname,
-        lname: lname,
-        email: email,
-        password: password,
-        phone: phone,
+        fname: fnameController.text.trim(),
+        lname: lnameController.text.trim(),
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+        phone: phoneController.text.trim(),
+        photoPath: '',
       );
 
-      await _dbManager.insertAppUser(newUser);
+      final db = DatabaseManager();
+      await db.insertAppUser(newUser);
 
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => ProfilePage(email: email),
+          builder: (context) => Dashboard(email: newUser.email),
         ),
       );
     } catch (e) {

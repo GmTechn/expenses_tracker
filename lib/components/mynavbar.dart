@@ -65,7 +65,10 @@ class MyNavBar extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MyCardsPage()),
+                    MaterialPageRoute(
+                        builder: (context) => MyCardsPage(
+                              email: email,
+                            )),
                   );
                 },
               ),
@@ -77,7 +80,7 @@ class MyNavBar extends StatelessWidget {
                   Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => ProfilePage(email: '')));
+                          builder: (context) => ProfilePage(email: email)));
                 },
               ),
             ],
