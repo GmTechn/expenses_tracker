@@ -37,7 +37,9 @@ class MyNavBar extends StatelessWidget {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => Dashboard(), // required
+                      builder: (context) => Dashboard(
+                        email: email,
+                      ), // required
                     ),
                   );
                 },

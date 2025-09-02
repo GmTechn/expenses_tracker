@@ -14,6 +14,7 @@ import 'package:path/path.dart';
 class Dashboard extends StatefulWidget {
   const Dashboard({
     super.key,
+    required String email,
   });
 
   @override

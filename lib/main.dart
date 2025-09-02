@@ -47,7 +47,9 @@ class MyApp extends StatelessWidget {
             );
           case '/dashboard':
             return MaterialPageRoute(
-              builder: (_) => Dashboard(),
+              builder: (_) => Dashboard(
+                email: args?['email'] ?? '',
+              ),
             );
 
           case '/transactions':
