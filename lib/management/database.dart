@@ -20,7 +20,7 @@ class DatabaseManager {
   Future<void> initialisation() async {
     _database = await openDatabase(
       join(await getDatabasesPath(), 'users_database.db'),
-      version: 4, // ✅ bump version when schema changes
+      version: 5, // ✅ bump version when schema changes
       onCreate: (db, version) async {
         await db.execute(
           '''CREATE TABLE users(
@@ -46,6 +46,22 @@ class DatabaseManager {
           
           )''',
         );
+
+        //--- Cards -----///
+
+        await db.execute(
+          '''CREATE TABLE cards(
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT,
+        amount TEXT,
+        cardnumber TEXT,
+        expirydate TEXT,
+        username TEXT,
+        colorOne INTEGER,
+        colorTwo INTEGER
+        )''',
+        );
       },
 
       //---Updating user profile----
@@ -66,17 +82,31 @@ class DatabaseManager {
         //Ensuring transaction exist
 
         await db.execute(
-          '''CREATE TABLE IF NOT EXISTS transactions 
-  (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  email TEXT,
-  place TEXT,
-  amount TEXT,
-  date TEXT,
-  logoPath TEXT
-  
-  )''',
+          '''CREATE TABLE IF NOT EXISTS transactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT,
+        place TEXT,
+        amount TEXT,
+        date TEXT,
+        logoPath TEXT
+        
+        )''',
         );
+
+        //Ensuring cards are stored
+        await db.execute('''
+
+          CREATE TABLE IF NOT EXISTS cards(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  email TEXT,
+                  amount TEXT,
+                  cardnumber TEXT,
+                  expirydate TEXT,
+                  username TEXT,
+                  colorOne INTEGER,
+                  colorTwo INTEGER
+          )
+        ''');
       },
     );
   }
@@ -169,5 +199,22 @@ class DatabaseManager {
   Future<void> deleteTransaction(int id) async {
     final db = await database;
     await db.delete('transactions', where: 'id = ?', whereArgs: [id]);
+  }
+
+  ///-------- CARDS ---------///
+
+  Future<void> insertCard(Map<String, dynamic> card) async {
+    final db = await database;
+    await db.insert('cards', card);
+  }
+
+  Future<List<Map<String, dynamic>>> getCards(String email) async {
+    final db = await database;
+    return await db.query('cards', where: "email = ?", whereArgs: [email]);
+  }
+
+  Future<void> deleteCard(int id) async {
+    final db = await database;
+    await db.delete('cards', where: 'id = ?', whereArgs: [id]);
   }
 }
