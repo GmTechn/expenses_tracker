@@ -1,7 +1,12 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:expenses_tracker/components/mynavbar.dart';
+import 'package:expenses_tracker/management/database.dart';
+import 'package:flutter/cupertino.dart';
+
 import 'package:flutter/material.dart';
+
 import 'package:image_picker/image_picker.dart';
 
 class Transaction {
@@ -20,6 +25,7 @@ class Transaction {
 
 class TransactionsPage extends StatefulWidget {
   const TransactionsPage({super.key, required this.email});
+
   final String email;
 
   @override
@@ -27,15 +33,56 @@ class TransactionsPage extends StatefulWidget {
 }
 
 class _TransactionsPageState extends State<TransactionsPage> {
+//generating a list of transactions
+
   final List<Transaction> _transactions = [];
+
+//calling the database
+
+  final dbManager = DatabaseManager();
+
+//initializing state
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTransactions();
+  }
+
+//loading transa from db
+
+  Future<void> _loadTransactions() async {
+    final data = await dbManager.getTransactions(widget.email);
+
+    setState(() {
+      _transactions.clear();
+      _transactions.addAll(
+        data.map(
+          (t) => Transaction(
+            place: t['place'],
+            logo: t['logoPath'] != null ? File(t['logoPath']) : null,
+            date: DateTime.parse(t['date']),
+            amount: t['amount'],
+          ),
+        ),
+      );
+    });
+  }
+
+//determining the controller that would take the values
+//to use to manipulate for place, amount, logo etc...
 
   final _formKey = GlobalKey<FormState>();
   final _placeController = TextEditingController();
   final _amountController = TextEditingController();
   File? _selectedLogo;
 
-  double get totalAmount =>
+//calculating the total amount of all transactions
+
+  double get totalTransactionsAmount =>
       _transactions.fold(0, (sum, item) => sum + item.amount);
+
+//generating the picking up of a logo to add to a transaction
 
   Future<void> _pickLogo() async {
     final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -46,150 +93,215 @@ class _TransactionsPageState extends State<TransactionsPage> {
     }
   }
 
-  void _addTransaction() {
+//function to add a transaction to the page
+
+  void _addTransaction() async {
     if (_formKey.currentState!.validate()) {
+      //inserting into transactions var , the transactions values
+      //that come from the text editting controllers
+      //parsing the amount from double to string
+
+      final newTransaction = Transaction(
+        place: _placeController.text,
+        logo: _selectedLogo,
+        date: DateTime.now(),
+        amount: double.parse(_amountController.text),
+      );
+
+      //save in DB
+
+      await dbManager.insertTransaction(
+        email: widget.email,
+        place: newTransaction.place,
+        amount: newTransaction.amount,
+        date: newTransaction.date,
+        logoPath: newTransaction.logo?.path,
+      );
+
       setState(() {
-        _transactions.insert(
-          0,
-          Transaction(
-            place: _placeController.text,
-            logo: _selectedLogo,
-            date: DateTime.now(),
-            amount: double.parse(_amountController.text),
-          ),
-        );
+        _transactions.insert(0, newTransaction);
+
+        //clearing the controllers after registering the data
+        //into the transaction instance
+
         _placeController.clear();
         _amountController.clear();
         _selectedLogo = null;
       });
-      Navigator.of(context).pop();
+
+      //getting rid of the context = alerdialog
+
+      Navigator.pop(context);
     }
   }
 
+//creating the showdialog that adds a transaction
+
   void _openAddTransactionDialog() {
     showDialog(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text("Add Transaction"),
-          content: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: _placeController,
-                    decoration: const InputDecoration(labelText: "Place"),
-                    validator: (value) =>
-                        value!.isEmpty ? "Enter a place" : null,
-                  ),
-                  TextFormField(
-                    controller: _amountController,
-                    decoration: const InputDecoration(labelText: "Amount"),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    validator: (value) =>
-                        value!.isEmpty ? "Enter amount" : null,
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: _pickLogo,
-                        icon: const Icon(Icons.image),
-                        label: const Text("Pick Logo"),
-                      ),
-                      const SizedBox(width: 10),
-                      _selectedLogo != null
-                          ? Image.file(
-                              _selectedLogo!,
-                              height: 40,
-                              width: 40,
-                              fit: BoxFit.cover,
-                            )
-                          : const Text("No logo selected"),
-                    ],
-                  ),
-                ],
+        context: context,
+        builder: (ctx) {
+          return AlertDialog(
+            title: const Text(
+              'Add Transaction',
+              style: TextStyle(
+                color: Color(
+                  0xff050c20,
+                ),
               ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text("Cancel"),
+            content: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _placeController,
+                      decoration: InputDecoration(labelText: "Place"),
+                      validator: (value) =>
+                          value!.isEmpty ? "Enter a place" : null,
+                    ),
+                    TextFormField(
+                      controller: _amountController,
+                      decoration: InputDecoration(labelText: "Amount"),
+                      keyboardType:
+                          TextInputType.numberWithOptions(decimal: true),
+                      validator: (value) =>
+                          value!.isEmpty ? "Enter amount" : null,
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Row(
+                      children: [
+                        TextButton.icon(
+                          icon: Icon(
+                            CupertinoIcons.photo,
+                            color: Color(0xff050c20),
+                          ),
+                          onPressed: _pickLogo,
+                          label: Text(
+                            "Pick a logo",
+                            style: TextStyle(
+                              color: Color(0xff050c20),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        _selectedLogo != null
+                            ? Image.file(
+                                _selectedLogo!,
+                                height: 40,
+                                width: 40,
+                                fit: BoxFit.cover,
+                              )
+                            : Text('No logo selected'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
-            ElevatedButton(
-              onPressed: _addTransaction,
-              child: const Text("Add"),
-            ),
-          ],
-        );
-      },
-    );
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: _addTransaction,
+                child: Text("Add"),
+              ),
+            ],
+          );
+        });
   }
 
   @override
   Widget build(BuildContext context) {
+    Color primarycolor = Color(0xff050c20);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Transactions"),
+        title: Text('T R A N S A C T I O N S'),
+        automaticallyImplyLeading: false,
       ),
       body: Column(
         children: [
           Expanded(
             child: _transactions.isEmpty
-                ? const Center(child: Text("No transactions yet"))
+                ? Center(
+                    child: Text("No transactions yet"),
+                  )
                 : ListView.builder(
                     itemCount: _transactions.length,
                     itemBuilder: (ctx, index) {
-                      final tx = _transactions[index];
+                      final transacIndex = _transactions[index];
                       return ListTile(
-                        leading: tx.logo != null
+                        leading: transacIndex.logo != null
                             ? CircleAvatar(
-                                backgroundImage: FileImage(tx.logo!),
+                                backgroundImage: FileImage(
+                                  transacIndex.logo!,
+                                ),
                               )
-                            : const CircleAvatar(child: Icon(Icons.store)),
-                        title: Text(tx.place),
+                            : CircleAvatar(
+                                child: Icon(CupertinoIcons.shopping_cart),
+                              ),
+                        title: Text(transacIndex.place),
                         subtitle: Text(
-                            "${tx.date.day}/${tx.date.month}/${tx.date.year}"),
-                        trailing: Text("\$${tx.amount.toStringAsFixed(2)}"),
+                            "${transacIndex.date.day}/${transacIndex.date.month}/${transacIndex.date.year}"),
+                        trailing:
+                            Text('\$${transacIndex.amount.toStringAsFixed(2)}'),
                       );
                     },
                   ),
           ),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.symmetric(horizontal: 25),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text("Total:",
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                Text("\$${totalAmount.toStringAsFixed(2)}",
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Total:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                Text(
+                  '\$${totalTransactionsAmount.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                )
               ],
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(16.0),
             child: ElevatedButton.icon(
               onPressed: _openAddTransactionDialog,
-              icon: const Icon(Icons.add),
-              label: const Text("Add Transaction"),
+              icon: Icon(
+                CupertinoIcons.add,
+                color: primarycolor,
+              ),
+              label: Text(
+                "Add Transaction",
+                style: TextStyle(
+                  color: primarycolor,
+                ),
+              ),
               style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
+                minimumSize: Size(50, 50),
               ),
             ),
           ),
         ],
       ),
-      bottomNavigationBar: MyNavBar(
-        currentIndex: 0,
-        email: '',
-      ),
+      bottomNavigationBar: MyNavBar(currentIndex: 1, email: widget.email),
     );
   }
 }

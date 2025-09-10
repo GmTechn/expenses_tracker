@@ -280,8 +280,7 @@ class _ProfilePageState extends State<ProfilePage> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(CupertinoIcons.arrow_uturn_right,
-                color: Color(0xff050c20)),
+            icon: const Icon(CupertinoIcons.power, color: Color(0xff050c20)),
             onPressed: _logout,
           ),
         ],
