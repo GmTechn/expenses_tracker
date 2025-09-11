@@ -276,7 +276,6 @@ class _ProfilePageState extends State<ProfilePage> {
         automaticallyImplyLeading: false,
         title: const Text('P R O F I L E',
             style: TextStyle(color: Color(0xff050c20))),
-        backgroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(

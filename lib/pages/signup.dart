@@ -10,6 +10,7 @@ import 'package:expenses_tracker/components/mysquaretile.dart';
 import 'package:expenses_tracker/management/database.dart';
 import 'package:expenses_tracker/models/users.dart';
 import 'package:expenses_tracker/pages/profile.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -19,11 +20,9 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-  final fnameController = TextEditingController();
-  final lnameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  final phoneController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
 
   final DatabaseManager _dbManager = DatabaseManager();
   final GoogleSignIn _googleSignIn = GoogleSignIn();
@@ -41,14 +40,17 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   Future<void> registerUser() async {
-    final fname = fnameController.text.trim();
-    final lname = lnameController.text.trim();
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
-    final phone = phoneController.text.trim();
+    final confirmPassword = confirmPasswordController.text.trim();
 
-    if (fname.isEmpty || lname.isEmpty || email.isEmpty || password.isEmpty) {
+    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       showMessage("Please fill in all required fields.");
+      return;
+    }
+
+    if (password != confirmPassword) {
+      showMessage("Passwords do not match.");
       return;
     }
 
@@ -65,16 +67,15 @@ class _SignUpPageState extends State<SignUpPage> {
       }
 
       final newUser = AppUser(
-        fname: fnameController.text.trim(),
-        lname: lnameController.text.trim(),
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-        phone: phoneController.text.trim(),
+        fname: '',
+        lname: '',
+        email: email,
+        password: password,
+        phone: '',
         photoPath: '',
       );
 
-      final db = DatabaseManager();
-      await db.insertAppUser(newUser);
+      await _dbManager.insertAppUser(newUser);
 
       if (!mounted) return;
       Navigator.pushReplacement(
@@ -93,14 +94,15 @@ class _SignUpPageState extends State<SignUpPage> {
       final account = await _googleSignIn.signIn();
       if (account != null) {
         showMessage('Signed in with Google');
-        // Optional: Create user in DB if new
         final existingUser = await _dbManager.getUserByEmail(account.email);
         if (existingUser == null) {
           final newUser = AppUser(
-            fname: account.displayName?.split(' ').first ?? '',
-            lname: account.displayName?.split(' ').last ?? '',
+            fname: '',
+            lname: '',
             email: account.email,
-            password: '', // no password for Google
+            password: '',
+            phone: '',
+            photoPath: '',
           );
           await _dbManager.insertAppUser(newUser);
         }
@@ -125,10 +127,12 @@ class _SignUpPageState extends State<SignUpPage> {
         final existingUser = await _dbManager.getUserByEmail(credential.email!);
         if (existingUser == null) {
           final newUser = AppUser(
-            fname: credential.givenName ?? '',
-            lname: credential.familyName ?? '',
+            fname: '',
+            lname: '',
             email: credential.email!,
             password: '',
+            phone: '',
+            photoPath: '',
           );
           await _dbManager.insertAppUser(newUser);
         }
@@ -151,35 +155,25 @@ class _SignUpPageState extends State<SignUpPage> {
           const SizedBox(height: 80),
           const Icon(CupertinoIcons.chart_bar_circle_fill,
               color: Color(0xff050c20), size: 60),
-          const SizedBox(height: 10),
-          const Text('B U D G E T  B U D D Y',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 32,
-                  color: Color(0xff050c20))),
+          const SizedBox(height: 20),
+          Text(
+            'B U D G E T  B U D D Y',
+            style: GoogleFonts.abel(
+              fontWeight: FontWeight.bold,
+              fontSize: 40,
+            ),
+          ),
           const SizedBox(height: 10),
           const Text('Create your account here!',
               style: TextStyle(
                   color: Color(0xff050c20), fontWeight: FontWeight.w500)),
-          const SizedBox(height: 20),
-          Mytextfield(
-              controller: fnameController,
-              hintText: 'First Name',
-              obscureText: false,
-              leadingIcon: const Icon(Icons.person, color: Color(0xff050c20))),
-          const SizedBox(height: 10),
-          Mytextfield(
-              controller: lnameController,
-              hintText: 'Last Name',
-              obscureText: false,
-              leadingIcon: const Icon(Icons.person, color: Color(0xff050c20))),
-          const SizedBox(height: 10),
+          const SizedBox(height: 40),
           Mytextfield(
               controller: emailController,
               hintText: 'Email',
               obscureText: false,
               leadingIcon: const Icon(Icons.email, color: Color(0xff050c20))),
-          const SizedBox(height: 10),
+          const SizedBox(height: 20),
           Mytextfield(
             controller: passwordController,
             hintText: 'Password',
@@ -193,14 +187,12 @@ class _SignUpPageState extends State<SignUpPage> {
                   setState(() => _isPasswordVisible = !_isPasswordVisible),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 20),
           Mytextfield(
-            controller: phoneController,
-            hintText: 'Phone (optional)',
-            obscureText: false,
-            leadingIcon: const Icon(Icons.phone, color: Color(0xff050c20)),
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            controller: confirmPasswordController,
+            hintText: 'Confirm Password',
+            obscureText: true,
+            leadingIcon: const Icon(Icons.lock, color: Color(0xff050c20)),
           ),
           const SizedBox(height: 20),
           MyButton(
@@ -208,7 +200,7 @@ class _SignUpPageState extends State<SignUpPage> {
               onTap: registerUser,
               buttonHeight: 40,
               buttonWidth: 200),
-          const SizedBox(height: 20),
+          const SizedBox(height: 40),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 25.0),
             child: Row(
@@ -225,7 +217,7 @@ class _SignUpPageState extends State<SignUpPage> {
               ],
             ),
           ),
-          const SizedBox(height: 25),
+          const SizedBox(height: 50),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -245,7 +237,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   style: TextStyle(color: Color(0xff050c20))),
               GestureDetector(
                 onTap: () {
-                  Navigator.pop(context); // or push to LoginPage if needed
+                  Navigator.pop(context);
                 },
                 child: const Text(
                   "Login",

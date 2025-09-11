@@ -115,13 +115,13 @@ class DatabaseManager {
   }
 
   /// ✅ Wipes the entire database (useful for testing)
-  Future<void> clearDatabase() async {
-    final path = join(await getDatabasesPath(), 'users_database.db');
-    if (await File(path).exists()) {
-      await deleteDatabase(path);
-    }
-    _database = null; // force re-init on next call
-  }
+  // Future<void> clearDatabase() async {
+  //   final path = join(await getDatabasesPath(), 'users_database.db');
+  //   if (await File(path).exists()) {
+  //     await deleteDatabase(path);
+  //   }
+  //   _database = null; // force re-init on next call
+  // }
 
   ///------------    USERS   -------------////
 

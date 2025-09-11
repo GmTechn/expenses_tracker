@@ -126,9 +126,8 @@ class _LoginPageState extends State<LoginPage> {
           const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('Welcome back '),
               Text(
-                ' !',
+                'Welcome back',
                 style: TextStyle(color: Color(0xff050c20)),
               ),
             ],
