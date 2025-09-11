@@ -167,6 +167,7 @@ class _DashboardState extends State<Dashboard> {
                 expirydate: '12/25',
                 colorOne: const Color.fromARGB(255, 5, 77, 113),
                 colorTwo: Colors.amber.withOpacity(.5),
+                colorThree: Colors.black,
                 username: _currentUser != null
                     ? "${_currentUser!.fname} ${_currentUser!.lname}"
                     : "User",

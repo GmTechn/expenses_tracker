@@ -5,7 +5,7 @@ import 'package:expenses_tracker/services/listofusers.dart';
 import 'package:flutter/material.dart';
 import 'package:expenses_tracker/pages/dashboard.dart';
 import 'package:expenses_tracker/pages/transactions.dart';
-import 'package:expenses_tracker/pages/mycards.dart';
+import 'package:expenses_tracker/pages/cardspage.dart';
 import 'package:expenses_tracker/pages/profile.dart';
 import 'package:expenses_tracker/management/database.dart';
 
@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      initialRoute: '/',
+      initialRoute: '/mycards',
       routes: {
         '/': (context) => const LoginPage(),
         // You can handle navigation with email using onGenerateRoute

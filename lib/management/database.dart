@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:expenses_tracker/models/cards.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:expenses_tracker/models/users.dart';
@@ -59,7 +60,8 @@ class DatabaseManager {
         expirydate TEXT,
         username TEXT,
         colorOne INTEGER,
-        colorTwo INTEGER
+        colorTwo INTEGER,
+        colorThree INTEGER
         )''',
         );
       },
@@ -104,7 +106,8 @@ class DatabaseManager {
                   expirydate TEXT,
                   username TEXT,
                   colorOne INTEGER,
-                  colorTwo INTEGER
+                  colorTwo INTEGER,
+                  colorThree INTEGER
           )
         ''');
       },
@@ -120,7 +123,7 @@ class DatabaseManager {
     _database = null; // force re-init on next call
   }
 
-  ///------------    USERS -------------////
+  ///------------    USERS   -------------////
 
   Future<List<AppUser>> getAllAppUsers() async {
     final db = await database;
@@ -203,15 +206,40 @@ class DatabaseManager {
 
   ///-------- CARDS ---------///
 
-  Future<void> insertCard(Map<String, dynamic> card) async {
+  ///inserting a new card  : CREATE
+
+  Future<void> insertCard(CardModel card) async {
     final db = await database;
-    await db.insert('cards', card);
+    await db.insert(
+      'cards',
+      card.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
-  Future<List<Map<String, dynamic>>> getCards(String email) async {
+  ///READ
+  ///
+  Future<List<CardModel>> getCards(String email) async {
     final db = await database;
-    return await db.query('cards', where: "email = ?", whereArgs: [email]);
+    final result =
+        await db.query('cards', where: 'email = ?', whereArgs: [email]);
+    return result.map((map) => CardModel.fromMap(map)).toList();
   }
+
+  ///UPDATE
+
+  Future<void> updateCard(CardModel card) async {
+    final db = await database;
+    await db.update(
+      'cards',
+      card.toMap(),
+      where: 'id=?',
+      whereArgs: [card.id],
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  ///DELETE
 
   Future<void> deleteCard(int id) async {
     final db = await database;

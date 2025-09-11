@@ -10,8 +10,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
-import 'package:expenses_tracker/models/users.dart';
-
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 

@@ -2,14 +2,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class MyCards extends StatelessWidget {
-  MyCards(
-      {super.key,
-      required this.amount,
-      required this.cardnumber,
-      required this.expirydate,
-      required this.username,
-      required this.colorOne,
-      required this.colorTwo});
+  MyCards({
+    super.key,
+    required this.amount,
+    required this.cardnumber,
+    required this.expirydate,
+    required this.username,
+    required this.colorOne,
+    required this.colorTwo,
+    required this.colorThree,
+  });
 
   final String amount;
   final String cardnumber;
@@ -17,8 +19,7 @@ class MyCards extends StatelessWidget {
   final String username;
   final Color colorOne;
   final Color colorTwo;
-
-  //calling the database
+  final Color colorThree;
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +35,7 @@ class MyCards extends StatelessWidget {
               colors: [
                 colorOne,
                 colorTwo,
+                colorThree,
               ])),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
