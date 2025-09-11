@@ -191,10 +191,17 @@ class _SignUpPageState extends State<SignUpPage> {
           Mytextfield(
             controller: confirmPasswordController,
             hintText: 'Confirm Password',
-            obscureText: true,
+            obscureText: !_isPasswordVisible,
             leadingIcon: const Icon(Icons.lock, color: Color(0xff050c20)),
+            trailingIcon: IconButton(
+              icon: Icon(
+                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                  color: const Color(0xff050c20)),
+              onPressed: () =>
+                  setState(() => _isPasswordVisible = !_isPasswordVisible),
+            ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 40),
           MyButton(
               textbutton: 'Sign Up',
               onTap: registerUser,

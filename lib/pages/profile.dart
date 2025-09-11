@@ -48,56 +48,23 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
-  /// Load profile from DB. This method is defensive:
-  /// - It tries both possible DB getters (getAppUserByEmail / getUserByEmail)
-  ///   to be compatible with small variations in your DatabaseManager API.
-  /// - It DOES NOT clear existing values if DB returns null or empty fields.
-  /// - It only overwrites a text controller when the DB value is non-empty.
   Future<void> _loadProfile() async {
     setState(() => _isLoading = true);
 
-    // Try to (re)initialize DB if available (some DatabaseManager implementations
-    // expose `initialisation()` — calling it is safe if already initialized).
-    try {
-      await _databaseManager.initialisation();
-    } catch (_) {
-      // ignore if method doesn't exist or DB already initialized
-    }
+    await _databaseManager.initialisation();
 
-    AppUser? user;
-    try {
-      user = await _databaseManager.getUserByEmail(widget.email);
-    } catch (_) {
-      try {
-        // fallback name some implementations use
-        user = await _databaseManager.getUserByEmail(widget.email);
-      } catch (_) {
-        user = null;
-      }
-    }
+    // Vérifie si l'utilisateur existe
+    AppUser? user = await _databaseManager.getUserByEmail(widget.email);
 
     if (!mounted) return;
 
     if (user != null) {
-      // Only overwrite fields when DB value is non-empty so we don't erase
-      // data that might be currently typed in UI.
-      if ((user.fname ?? '').isNotEmpty) {
-        _fnameController.text = user.fname;
-      }
-      if ((user.lname ?? '').isNotEmpty) {
-        _lnameController.text = user.lname;
-      }
-      // email is authoritative; prefer DB email if present, otherwise keep existing or widget.email
-      if ((user.email ?? '').isNotEmpty) {
-        _emailController.text = user.email;
-      } else if (_emailController.text.isEmpty) {
-        _emailController.text = widget.email;
-      }
-      if ((user.phone ?? '').isNotEmpty) {
-        _phoneController.text = user.phone;
-      }
+      _user = user;
 
-      // Only set image if path exists and file exists on disk
+      _fnameController.text = user.fname ?? '';
+      _lnameController.text = user.lname ?? '';
+      _emailController.text = user.email ?? widget.email;
+      _phoneController.text = user.phone ?? '';
       if (user.photoPath != null && user.photoPath!.isNotEmpty) {
         final f = File(user.photoPath!);
         if (f.existsSync()) {
@@ -105,13 +72,9 @@ class _ProfilePageState extends State<ProfilePage> {
           _photoPath = user.photoPath;
         }
       }
-
-      _user = user;
     } else {
-      // No DB user found: don't clear the UI. Ensure email field has widget.email.
-      if (_emailController.text.isEmpty && widget.email.isNotEmpty) {
-        _emailController.text = widget.email;
-      }
+      // Si pas trouvé dans la DB, initialise juste l'email
+      _emailController.text = widget.email;
     }
 
     setState(() => _isLoading = false);
@@ -126,19 +89,18 @@ class _ProfilePageState extends State<ProfilePage> {
           _photoPath = picked.path;
         });
 
-        // ✅ Persist immediately if user exists
         if (_user != null) {
           final updated = AppUser(
             id: _user!.id,
-            fname: _user!.fname,
-            lname: _user!.lname,
+            fname: _fnameController.text,
+            lname: _lnameController.text,
             email: _user!.email,
             password: _user!.password,
-            phone: _user!.phone,
+            phone: _phoneController.text,
             photoPath: _photoPath ?? '',
           );
           await _databaseManager.updateAppUser(updated);
-          _user = updated; // keep in memory too
+          _user = updated;
         }
       }
     } catch (e) {
@@ -179,14 +141,8 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  /// Save updated fields to DB. If there's no loaded user we show a message.
   Future<void> _updateProfile() async {
-    if (_user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No user loaded to update')),
-      );
-      return;
-    }
+    if (_user == null) return;
 
     final updated = AppUser(
       id: _user!.id,
@@ -200,8 +156,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
     try {
       await _databaseManager.updateAppUser(updated);
-      // reload to reflect DB canonical values (but _loadProfile won't clear non-empty UI)
+      _user = updated;
       await _loadProfile();
+
       if (mounted) {
         showDialog(
           context: context,
@@ -218,7 +175,6 @@ class _ProfilePageState extends State<ProfilePage> {
         );
       }
     } catch (e) {
-      debugPrint('Update failed: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Update failed: $e')),
@@ -227,7 +183,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  /// Revert UI fields to the last-saved DB state with confirmation
   Future<void> _confirmCancel() async {
     final doCancel = await showDialog<bool>(
       context: context,
@@ -332,28 +287,32 @@ class _ProfilePageState extends State<ProfilePage> {
                       controller: _fnameController,
                       hintText: 'First Name',
                       obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.person_fill),
+                      leadingIcon: const Icon(CupertinoIcons.person_fill,
+                          color: Color(0xff050c20)),
                     ),
                     const SizedBox(height: 20),
                     Mytextfield(
                       controller: _lnameController,
                       hintText: 'Last Name',
                       obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.person_fill),
+                      leadingIcon: const Icon(CupertinoIcons.person_fill,
+                          color: Color(0xff050c20)),
                     ),
                     const SizedBox(height: 20),
                     Mytextfield(
                       controller: _emailController,
                       hintText: 'Email',
                       obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.mail_solid),
+                      leadingIcon: const Icon(CupertinoIcons.mail_solid,
+                          color: Color(0xff050c20)),
                     ),
                     const SizedBox(height: 20),
                     Mytextfield(
                       controller: _phoneController,
                       hintText: 'Phone',
                       obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.phone_fill),
+                      leadingIcon: const Icon(CupertinoIcons.phone_fill,
+                          color: Color(0xff050c20)),
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     ),
