@@ -1,79 +1,84 @@
 import 'package:flutter/material.dart';
 
 class Mytransaction extends StatelessWidget {
-  const Mytransaction(
-      {super.key,
-      required this.logo,
-      required this.title,
-      required this.date,
-      required this.amount});
+  const Mytransaction({
+    super.key,
+    required this.logo,
+    required this.title,
+    required this.date,
+    required this.amount,
+  });
 
-  final String logo;
+  final String logo; // URL ou asset path
   final String title;
   final String date;
   final double amount;
 
   @override
   Widget build(BuildContext context) {
+    final bool isIncome = amount >= 0;
+    final Color amountColor = isIncome ? Colors.green : Colors.red;
+
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-      padding: EdgeInsets.all(8),
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Color.fromARGB(255, 35, 37, 46),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black,
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        color: const Color.fromARGB(255, 35, 37, 46),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
-          //logo image of transaction
           CircleAvatar(
-            radius: 24,
-            backgroundImage: AssetImage(logo),
-            backgroundColor: Color.fromARGB(255, 35, 37, 46),
+            radius: 25,
+            backgroundColor: Colors.white,
+            child: ClipOval(
+              child: logo.startsWith('http')
+                  ? Image.network(
+                      logo,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.store, color: Color(0xff181a1e)),
+                    )
+                  : Image.asset(
+                      logo,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.store, color: Color(0xff181a1e)),
+                    ),
+            ),
           ),
-          const SizedBox(
-            width: 16,
-          ),
-          //Title + Transaction Date
-
+          const SizedBox(width: 12),
           Expanded(
-              child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: Colors.white),
-              ),
-              const SizedBox(
-                height: 4,
-              ),
-              Text(
-                date,
-                style: TextStyle(color: Colors.grey, fontSize: 13),
-              ),
-
-              //Amount
-
-              Text(
-                amount >= 0
-                    ? "+\$${amount.toStringAsFixed(2)}"
-                    : "-\$${amount.abs().toStringAsFixed(2)}",
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: amount >= 0 ? Colors.green : Colors.red),
-              ),
-            ],
-          ))
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  date,
+                  style: const TextStyle(
+                    color: Colors.white54,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            "${isIncome ? '+' : '-'}\$${amount.abs().toStringAsFixed(2)}",
+            style: TextStyle(
+              color: amountColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
         ],
       ),
     );

@@ -14,6 +14,8 @@ class MyTextFormField extends StatelessWidget {
     this.textInputAction,
     this.validator,
     this.onFieldSubmitted,
+    this.readOnly = false, // <-- ajouté
+    this.onTap, // <-- ajouté
   });
 
   final TextEditingController controller;
@@ -26,6 +28,8 @@ class MyTextFormField extends StatelessWidget {
   final TextInputAction? textInputAction;
   final String? Function(String?)? validator;
   final void Function(String)? onFieldSubmitted;
+  final bool readOnly; // <-- ajouté
+  final void Function()? onTap; // <-- ajouté
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +43,8 @@ class MyTextFormField extends StatelessWidget {
       textInputAction: textInputAction,
       validator: validator,
       onFieldSubmitted: onFieldSubmitted,
+      readOnly: readOnly, // <-- ajouté
+      onTap: onTap, // <-- ajouté
       style: const TextStyle(color: whiteColor),
       cursorColor: whiteColor,
       decoration: InputDecoration(

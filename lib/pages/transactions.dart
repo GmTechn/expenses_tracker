@@ -1,10 +1,11 @@
-import 'dart:io';
 import 'package:expenses_tracker/models/transactions.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:expenses_tracker/components/mynavbar.dart';
 import 'package:expenses_tracker/components/mytextfield.dart';
 import 'package:expenses_tracker/management/database.dart';
+
+import '../components/mytransaction.dart';
 
 class TransactionsPage extends StatefulWidget {
   const TransactionsPage({super.key, required this.email});
@@ -22,14 +23,15 @@ class _TransactionsPageState extends State<TransactionsPage> {
   final _placeController = TextEditingController();
   final _amountController = TextEditingController();
   String? _selectedBrand;
+  String _transactionType = 'Income'; // par défaut
 
   final Map<String, String> brandLogos = {
     'Apple':
         'https://w7.pngwing.com/pngs/589/546/png-transparent-apple-logo-new-york-city-brand-computer-apple-company-computer-logo.png',
     'Google':
-        'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.png',
-    'Zara':
-        'https://logos-world.net/wp-content/uploads/2020/05/Zara-Logo.png', // ton lien qui fonctionnait
+        'https://4kwallpapers.com/images/wallpapers/google-logo-5k-8k-7680x4320-11298.png',
+    'Zara': 'https://logos-world.net/wp-content/uploads/2020/05/Zara-Logo.png',
+    // ton lien qui fonctionnait
     'H&M':
         'https://e7.pngegg.com/pngimages/43/204/png-clipart-logo-h-m-brand-clothing-logo-hm.png',
     'Shein':
@@ -38,15 +40,12 @@ class _TransactionsPageState extends State<TransactionsPage> {
         'https://www.per-accurate.com/wp-content/uploads/2023/08/walmart-logo-24.jpg',
     'Loblaws':
         'https://cdn.freebiesupply.com/logos/large/2x/loblaws-logo-png-transparent.png',
-
     'Nike':
         'https://www.muraldecal.com/en/img/asfs364-jpg/folder/products-listado-merchanthover/stickers-nike-on-your-logo.jpg',
     'Amazon': 'https://wallpapercave.com/wp/wp7771222.png',
     'Samsung': 'https://www.pc-canada.com/dd2/img/item/B-500x500/-/Samsung.jpg',
-
     'Microsoft':
         'https://static.vecteezy.com/system/resources/previews/014/018/578/non_2x/microsoft-logo-on-transparent-background-free-vector.jpg',
-
     'Facebook':
         'https://www.citypng.com/public/uploads/preview/round-blue-circle-contains-f-letter-facebook-logo-701751695134712lb9coc4kea.png',
     'Twitter':
@@ -57,6 +56,14 @@ class _TransactionsPageState extends State<TransactionsPage> {
     'Spotify':
         'https://www.freepnglogos.com/uploads/spotify-logo-png/spotify-logo-spotify-symbol-3.png',
     'Netflix': 'https://images3.alphacoders.com/115/1152293.png',
+    'Paypal': 'https://static.cdnlogo.com/logos/p/9/paypal.png',
+    'Interact': 'https://download.logo.wine/logo/Interac/Interac-Logo.wine.png',
+    'Wise':
+        'https://d21buns5ku92am.cloudfront.net/69645/images/470455-Frame%2039263-cdfad6-medium-1677657684.png',
+    'Direct Deposit':
+        'https://www.shutterstock.com/image-vector/building-vector-icon-column-bank-600nw-1930635143.jpg',
+    'MoneyGram':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/MoneyGram_Logo.svg/2560px-MoneyGram_Logo.svg.png',
   };
 
   @override
@@ -67,6 +74,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
   Future<void> _loadTransactions() async {
     final data = await dbManager.getTransactions(widget.email);
+    data.sort((a, b) => b.date.compareTo(a.date)); // ordre décroissant
     setState(() {
       _transactions.clear();
       _transactions.addAll(data);
@@ -79,27 +87,28 @@ class _TransactionsPageState extends State<TransactionsPage> {
   Future<void> _addOrUpdateTransaction({TransactionModel? existing}) async {
     if (_formKey.currentState!.validate()) {
       final place = _placeController.text;
-      final amount = double.parse(_amountController.text);
+      final rawAmount = double.parse(_amountController.text);
+      final signedAmount =
+          _transactionType == 'Income' ? rawAmount : -rawAmount;
+
       final logoPath =
           _selectedBrand != null ? brandLogos[_selectedBrand!] : null;
 
       TransactionModel transaction;
       if (existing != null) {
-        // Update
         transaction = existing.copyWith(
           place: place,
-          amount: amount,
+          amount: signedAmount,
           logoPath: logoPath,
         );
         await dbManager.updateTransaction(transaction);
         final index = _transactions.indexWhere((t) => t.id == existing.id);
         setState(() => _transactions[index] = transaction);
       } else {
-        // Insert
         transaction = TransactionModel(
           email: widget.email,
           place: place,
-          amount: amount,
+          amount: signedAmount,
           date: DateTime.now(),
           logoPath: logoPath,
         );
@@ -111,13 +120,18 @@ class _TransactionsPageState extends State<TransactionsPage> {
       _placeController.clear();
       _amountController.clear();
       _selectedBrand = null;
+      _transactionType = 'Income';
     }
   }
 
   void _openTransactionDialog({TransactionModel? transaction}) {
+    String? _selectedType = transaction != null
+        ? (transaction.amount >= 0 ? 'Income' : 'Expense')
+        : null;
+
     if (transaction != null) {
       _placeController.text = transaction.place;
-      _amountController.text = transaction.amount.toString();
+      _amountController.text = transaction.amount.abs().toString();
       _selectedBrand = brandLogos.entries
           .firstWhere((entry) => entry.value == transaction.logoPath,
               orElse: () => const MapEntry('', ''))
@@ -144,6 +158,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // PLACE
                   MyTextFormField(
                     leadingIcon: const Icon(CupertinoIcons.placemark),
                     controller: _placeController,
@@ -152,47 +167,88 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     validator: (value) =>
                         value!.isEmpty ? "Enter a place" : null,
                   ),
+
                   const SizedBox(height: 10),
+
+                  // AMOUNT
                   MyTextFormField(
                     leadingIcon: const Icon(CupertinoIcons.money_dollar),
                     controller: _amountController,
-                    hintText: "Amount",
+                    hintText: 'Amount',
                     obscureText: false,
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
                     validator: (value) =>
                         value!.isEmpty ? "Enter amount" : null,
                   ),
+
                   const SizedBox(height: 10),
-                  DropdownButtonFormField<String>(
-                    value: brandLogos.containsKey(_selectedBrand)
-                        ? _selectedBrand
-                        : null,
-                    hint: const Text(
-                      'Select Brand',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                    items: brandLogos.keys
-                        .map(
-                          (brand) => DropdownMenuItem(
-                            value: brand,
-                            child: Text(brand),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedBrand = value;
-                      });
+
+                  // BRAND
+                  MyTextFormField(
+                    leadingIcon: const Icon(CupertinoIcons.tag),
+                    controller: TextEditingController(text: _selectedBrand),
+                    hintText: 'Select Brand',
+                    obscureText: false,
+                    readOnly: true,
+                    onTap: () async {
+                      final brand = await showDialog<String>(
+                        context: context,
+                        builder: (_) {
+                          return SimpleDialog(
+                            title: const Text('Select Brand',
+                                style: TextStyle(color: Colors.white)),
+                            backgroundColor: const Color(0xff181a1e),
+                            children: brandLogos.keys.map((brand) {
+                              return SimpleDialogOption(
+                                onPressed: () => Navigator.pop(context, brand),
+                                child: Text(brand,
+                                    style:
+                                        const TextStyle(color: Colors.white)),
+                              );
+                            }).toList(),
+                          );
+                        },
+                      );
+                      if (brand != null) {
+                        setState(() => _selectedBrand = brand);
+                      }
                     },
-                    dropdownColor: const Color(0xff181a1e),
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white54),
-                      ),
-                    ),
-                  )
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // TYPE (Income / Expense)
+                  MyTextFormField(
+                    leadingIcon: const Icon(CupertinoIcons.arrow_2_circlepath),
+                    controller: TextEditingController(text: _selectedType),
+                    hintText: 'Type',
+                    obscureText: false,
+                    readOnly: true,
+                    onTap: () async {
+                      final type = await showDialog<String>(
+                        context: context,
+                        builder: (_) {
+                          return SimpleDialog(
+                            title: const Text('Select Type',
+                                style: TextStyle(color: Colors.white)),
+                            backgroundColor: const Color(0xff181a1e),
+                            children: ['Income', 'Expense'].map((t) {
+                              return SimpleDialogOption(
+                                onPressed: () => Navigator.pop(context, t),
+                                child: Text(t,
+                                    style:
+                                        const TextStyle(color: Colors.white)),
+                              );
+                            }).toList(),
+                          );
+                        },
+                      );
+                      if (type != null) {
+                        setState(() => _selectedType = type);
+                      }
+                    },
+                  ),
                 ],
               ),
             ),
@@ -212,8 +268,45 @@ class _TransactionsPageState extends State<TransactionsPage> {
                   ),
                 ),
                 TextButton(
-                  onPressed: () =>
-                      _addOrUpdateTransaction(existing: transaction),
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      final place = _placeController.text;
+                      final sign = _selectedType == 'Income' ? 1 : -1;
+                      final amount =
+                          double.parse(_amountController.text) * sign;
+                      final logoPath = _selectedBrand != null
+                          ? brandLogos[_selectedBrand!]
+                          : null;
+
+                      TransactionModel transactionModel;
+                      if (transaction != null) {
+                        transactionModel = transaction.copyWith(
+                          place: place,
+                          amount: amount,
+                          logoPath: logoPath,
+                        );
+                        dbManager.updateTransaction(transactionModel);
+                        final index = _transactions
+                            .indexWhere((t) => t.id == transaction.id);
+                        setState(() => _transactions[index] = transactionModel);
+                      } else {
+                        transactionModel = TransactionModel(
+                          email: widget.email,
+                          place: place,
+                          amount: amount,
+                          date: DateTime.now(),
+                          logoPath: logoPath,
+                        );
+                        dbManager.insertTransaction(transactionModel);
+                        _loadTransactions();
+                      }
+
+                      Navigator.pop(context);
+                      _placeController.clear();
+                      _amountController.clear();
+                      _selectedBrand = null;
+                    }
+                  },
                   child: const Text(
                     "Save",
                     style: TextStyle(
@@ -256,54 +349,67 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     itemCount: _transactions.length,
                     itemBuilder: (ctx, index) {
                       final t = _transactions[index];
-                      return Dismissible(
-                        key: ValueKey(t.id),
-                        background: Container(
-                          color: Colors.red,
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: const Icon(Icons.delete, color: Colors.white),
-                        ),
-                        direction: DismissDirection
-                            .endToStart, // glisser vers la gauche pour supprimer
-                        onDismissed: (direction) async {
-                          await dbManager.deleteTransaction(t.id!);
-                          _loadTransactions();
-                        },
-                        child: ListTile(
-                          onTap: () => _openTransactionDialog(transaction: t),
-                          leading: t.logoPath != null && t.logoPath!.isNotEmpty
-                              ? CircleAvatar(
-                                  radius: 28,
-                                  backgroundColor: Colors.white,
-                                  child: ClipOval(
-                                    child: Image.network(
-                                      t.logoPath!,
-                                      fit: BoxFit.fill,
-                                    ),
-                                  ),
-                                )
-                              : const CircleAvatar(
-                                  backgroundColor: Colors.white,
-                                  child: Icon(
-                                    CupertinoIcons.cart_fill,
-                                    color: Color(0xff181a1e),
-                                  ),
-                                ),
-                          title: Text(
-                            t.place,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                      final isIncome = t.amount >= 0;
+
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Dismissible(
+                          key: ValueKey(t.id),
+                          background: Container(
+                            color: Colors.red,
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child:
+                                const Icon(Icons.delete, color: Colors.white),
+                          ),
+                          direction: DismissDirection
+                              .endToStart, // glisser vers la gauche pour supprimer
+                          onDismissed: (direction) async {
+                            await dbManager.deleteTransaction(t.id!);
+                            _loadTransactions();
+                          },
+                          child: ListTile(
+                            onTap: () => _openTransactionDialog(transaction: t),
+                            leading:
+                                t.logoPath != null && t.logoPath!.isNotEmpty
+                                    ? CircleAvatar(
+                                        radius: 28,
+                                        backgroundColor: Colors.white,
+                                        child: ClipOval(
+                                          child: Image.network(
+                                            t.logoPath!,
+                                            fit: BoxFit.fill,
+                                          ),
+                                        ),
+                                      )
+                                    : const CircleAvatar(
+                                        backgroundColor: Colors.white,
+                                        child: Icon(
+                                          CupertinoIcons.cart_fill,
+                                          color: Color(0xff181a1e),
+                                        ),
+                                      ),
+                            title: Text(
+                              t.place,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          subtitle: Text(
-                            "${t.date.day}/${t.date.month}/${t.date.year}",
-                            style: const TextStyle(color: Colors.white54),
-                          ),
-                          trailing: Text(
-                            '\$${t.amount.toStringAsFixed(2)}',
-                            style: const TextStyle(color: Colors.white54),
+                            subtitle: Text(
+                              "${t.date.day}/${t.date.month}/${t.date.year}",
+                              style: const TextStyle(color: Colors.white54),
+                            ),
+                            trailing: Text(
+                              (isIncome ? '+' : '-') +
+                                  '\$${t.amount.abs().toStringAsFixed(2)}',
+                              style: TextStyle(
+                                color: isIncome
+                                    ? Colors.greenAccent
+                                    : Colors.redAccent,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                       );
