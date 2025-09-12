@@ -58,6 +58,15 @@ class _DashboardState extends State<Dashboard> {
     });
   }
 
+//loading cards to display
+
+// Future<void> _loadDefaultCard() async {
+//   final card = await _databaseManager.getDefaultCard(widget.email);
+//   setState(() {
+//     _defaultCard = card;
+//   });
+// }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -14,7 +14,11 @@ void main() async {
 
   final dbManager = DatabaseManager();
 
+  //clearing db
+  //await dbManager.clearDatabase();
+
   // ✅ Initialise toujours la DB avec version:1
+
   await dbManager.initialisation();
 
   // Récupère l'utilisateur courant (email si connecté)

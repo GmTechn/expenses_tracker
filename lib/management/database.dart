@@ -14,11 +14,11 @@ class DatabaseManager {
     return _database!;
   }
 
-  /// ✅ Initialise une seule fois avec version 1
+  /// ✅ Initialise une seule fois avec version 2
   Future<void> initialisation() async {
     _database = await openDatabase(
       join(await getDatabasesPath(), 'users_database.db'),
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         // --- Users ---
         await db.execute(
@@ -56,14 +56,22 @@ class DatabaseManager {
             username TEXT,
             colorOne INTEGER,
             colorTwo INTEGER,
-            colorThree INTEGER
+            colorThree INTEGER,
+            isDefault INTEGER DEFAULT 0
           )''',
         );
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          // Ajoute la colonne manquante
+          await db.execute(
+              'ALTER TABLE cards ADD COLUMN isDefault INTEGER DEFAULT 0');
+        }
       },
     );
   }
 
-  /// ✅ Toujours clear la DB au lancement (dev only)
+  /// ✅ Clear database (dev only)
   Future<void> clearDatabase() async {
     final path = join(await getDatabasesPath(), 'users_database.db');
     if (await File(path).exists()) {
@@ -87,29 +95,17 @@ class DatabaseManager {
 
   Future<void> upsertAppUser(AppUser user) async {
     final db = await database;
-
-    // Vérifie si un user existe déjà avec le même email
     final existing = await db.query(
       'users',
       where: 'email = ?',
       whereArgs: [user.email],
     );
-
     if (existing.isEmpty) {
-      // Insert si le user n'existe pas encore
-      await db.insert(
-        'users',
-        user.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await db.insert('users', user.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace);
     } else {
-      // Update si déjà présent
-      await db.update(
-        'users',
-        user.toMap(),
-        where: 'email = ?',
-        whereArgs: [user.email],
-      );
+      await db.update('users', user.toMap(),
+          where: 'email = ?', whereArgs: [user.email]);
     }
   }
 
@@ -164,12 +160,22 @@ class DatabaseManager {
   }
 
   // --------- CARDS ---------- //
-  Future<void> insertCard(CardModel card) async {
+
+  // Retourne la carte par défaut
+  Future<CardModel?> getDefaultCard(String email) async {
     final db = await database;
-    await db.insert('cards', card.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace);
+    final result = await db.query(
+      'cards',
+      where: 'email = ? AND isDefault = 1',
+      whereArgs: [email],
+    );
+    if (result.isNotEmpty) {
+      return CardModel.fromMap(result.first);
+    }
+    return null;
   }
 
+  // Retourne toutes les cartes
   Future<List<CardModel>> getCards(String email) async {
     final db = await database;
     final result =
@@ -177,16 +183,38 @@ class DatabaseManager {
     return result.map((map) => CardModel.fromMap(map)).toList();
   }
 
-  Future<void> updateCard(CardModel card) async {
+  // Insérer une carte et retourner son ID
+  Future<int> insertCard(CardModel card) async {
     final db = await database;
-    await db.update('cards', card.toMap(),
-        where: 'id=?',
+    return await db.insert('cards', card.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  // Mettre à jour une carte et retourner le nombre de lignes affectées
+  Future<int> updateCard(CardModel card) async {
+    final db = await database;
+    return await db.update('cards', card.toMap(),
+        where: 'id = ?',
         whereArgs: [card.id],
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  // Supprimer une carte
   Future<void> deleteCard(int id) async {
     final db = await database;
     await db.delete('cards', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // Définir une carte par défaut (une seule)
+  Future<void> setDefaultCard(String email, int cardID) async {
+    final db = await database;
+
+    // Reset toutes les cartes
+    await db.update('cards', {'isDefault': 0},
+        where: 'email = ?', whereArgs: [email]);
+
+    // Définir la nouvelle carte par défaut
+    await db.update('cards', {'isDefault': 1},
+        where: 'id = ?', whereArgs: [cardID]);
   }
 }
