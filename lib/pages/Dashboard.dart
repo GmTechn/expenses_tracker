@@ -13,6 +13,7 @@ import 'package:expenses_tracker/pages/profile.dart';
 import 'package:expenses_tracker/services/listofusers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // ✅ added
 
 class Dashboard extends StatefulWidget {
   final String email; // ✅ keep the email passed from signup
@@ -37,6 +38,10 @@ class _DashboardState extends State<Dashboard> {
 //Default card
   CardModel? _defaultCard;
 
+//photo path to persit
+
+  String? _savedPhotoPath;
+
 //initialising state
 
   @override
@@ -44,6 +49,17 @@ class _DashboardState extends State<Dashboard> {
     super.initState();
     _loadUsers();
     _loadDefaultCard();
+    _loadSavedPhoto();
+  }
+
+  Future<void> _loadSavedPhoto() async {
+    final prefs = await SharedPreferences.getInstance();
+    final path = prefs.getString('profile_photo_${widget.email}');
+    if (path != null && path.isNotEmpty) {
+      setState(() {
+        _savedPhotoPath = path;
+      });
+    }
   }
 
   //--Refreshing the page to reload the page
@@ -128,8 +144,13 @@ class _DashboardState extends State<Dashboard> {
                             (_currentUser?.photoPath ?? '').isNotEmpty &&
                                     File(_currentUser!.photoPath!).existsSync()
                                 ? FileImage(File(_currentUser!.photoPath!))
-                                : null,
-                        child: (_currentUser?.photoPath ?? '').isEmpty
+                                : (_savedPhotoPath != null &&
+                                        File(_savedPhotoPath!).existsSync())
+                                    ? FileImage(File(_savedPhotoPath!))
+                                    : null,
+                        child: (_currentUser?.photoPath ?? '').isEmpty &&
+                                (_savedPhotoPath == null ||
+                                    _savedPhotoPath!.isEmpty)
                             ? const Icon(
                                 CupertinoIcons.person_fill,
                                 color: Color(0xff050c20),

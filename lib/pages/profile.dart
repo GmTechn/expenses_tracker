@@ -11,6 +11,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // ✅ added
 
 class ProfilePage extends StatefulWidget {
   final String email;
@@ -77,12 +78,16 @@ class _ProfilePageState extends State<ProfilePage> {
       await _databaseManager.initialisation();
     } catch (_) {}
 
-//Getting an instance of the app user in the database
-//using the function getUserByEmail
-//to be sure to display les information correspondante au user
-//that we need to
-//and if we do not get any user on doit rien display
-//pas d'information
+    // ✅ First, check SharedPreferences for saved photoPath
+    final prefs = await SharedPreferences.getInstance();
+    final savedPhotoPath = prefs.getString('profile_photo_${widget.email}');
+    if (savedPhotoPath != null && savedPhotoPath.isNotEmpty) {
+      final f = File(savedPhotoPath);
+      if (f.existsSync()) {
+        _imageFile = f;
+        _photoPath = savedPhotoPath;
+      }
+    }
 
     AppUser? user;
     try {
@@ -98,19 +103,12 @@ class _ProfilePageState extends State<ProfilePage> {
     if (!mounted) return;
 
     if (user != null) {
-      //Lorsqu'on retrouve un user dans la database
-      //we display all data related to him
-      //coming from the controllers
-
       if ((user.fname ?? '').isNotEmpty) {
         _fnameController.text = user.fname;
       }
       if ((user.lname ?? '').isNotEmpty) {
         _lnameController.text = user.lname;
       }
-
-      //Pour l'email on display celui qui est dans la database
-      //ou alors ce qu'on receuill du Sign up
 
       if ((user.email ?? '').isNotEmpty) {
         _emailController.text = user.email;
@@ -121,10 +119,10 @@ class _ProfilePageState extends State<ProfilePage> {
         _phoneController.text = user.phone;
       }
 
-      // Set the image only if we have its path dans le file
-      //sinon si c'est empty on display le default avatar
-
-      if (user.photoPath != null && user.photoPath!.isNotEmpty) {
+      // Only update image if SharedPreferences didn't already have it
+      if ((_photoPath == null || _photoPath!.isEmpty) &&
+          user.photoPath != null &&
+          user.photoPath!.isNotEmpty) {
         final f = File(user.photoPath!);
         if (f.existsSync()) {
           _imageFile = f;
@@ -134,18 +132,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
       _user = user;
     } else {
-      //If there is no user found dans la database don't clear the UI.
-      //but ensure email field has widget.email
-      //so nothing remains empty
-
       if (_emailController.text.isEmpty && widget.email.isNotEmpty) {
         _emailController.text = widget.email;
       }
     }
-
-    //if the profile loads successfully
-    //le statut de isLoading devient faux parce qu'on a succeed
-    //to display the loaded user
 
     setState(() => _isLoading = false);
   }
@@ -162,11 +152,10 @@ class _ProfilePageState extends State<ProfilePage> {
           _photoPath = picked.path;
         });
 
-//Si le user is not null then on generate an instance de user
-//to whom you assign profile path that was just picked
-//and then on maj la database with the new path set
-//so when coming back we get the last set image
-//according to the info store in the db
+        // ✅ Save to SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+            'profile_photo_${widget.email}', _photoPath ?? '');
 
         if (_user != null) {
           final updated = AppUser(
@@ -183,10 +172,6 @@ class _ProfilePageState extends State<ProfilePage> {
         }
       }
     } catch (e) {
-      //debugprint is a function that send a message in the console
-      //to print the error so we have an idea of what the error is
-      //aslo send a snackbar that displays the error for the user to know
-
       debugPrint('Image pick error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -195,10 +180,6 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     }
   }
-
-  //picker options helps us pick images from two sources
-  //when the camera icon is clicked on
-  //Gallery or camera
 
   void _showImagePickerOptions() {
     showModalBottomSheet(
@@ -228,17 +209,13 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  //when the profile is updated with new info
-  //they are store and if it's empty, the "no user message"
-  //gets displayed
-
   Future<void> _updateProfile() async {
     final updated = AppUser(
-      id: _user?.id, // garde l’id si déjà existant
+      id: _user?.id,
       fname: _fnameController.text.trim(),
       lname: _lnameController.text.trim(),
       email: _emailController.text.trim(),
-      password: _user?.password ?? '', // garde l’ancien mot de passe
+      password: _user?.password ?? '',
       phone: _phoneController.text.trim(),
       photoPath: _photoPath ?? '',
     );
@@ -267,11 +244,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  //this function cancels the changes the user might have wanted
-  //to make to their profile
-  //if the var doCancel is true you simply load the profile info
-  //that was lastly saved
-
   Future<void> _confirmCancel() async {
     final doCancel = await showDialog<bool>(
       context: context,
@@ -281,27 +253,18 @@ class _ProfilePageState extends State<ProfilePage> {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text(
-                'No',
-              )),
+              child: const Text('No')),
           TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text(
-                'Yes',
-              )),
+              child: const Text('Yes')),
         ],
       ),
     );
-
-//doCancel acts here
 
     if (doCancel == true) {
       await _loadProfile();
     }
   }
-
-  //Showing full image when the user clicks on the image
-  //to make it bigger , you simply have to "not" the _imageFile
 
   void _showFullImage() {
     if (_imageFile == null) return;
@@ -315,20 +278,13 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  //Generating the logout function
-  //that replaces the current page with the LoginPage
-  //meaning on revient vers le login by replacing it
-  //avec la page actuelle
-
   void _logout() async {
     if (_user != null) {
-      // ✅ Sauvegarde l'email courant dans la session
       await SessionManager.saveCurrentUser(_user!.email);
     }
 
     if (!mounted) return;
 
-    // ✅ Redirige vers LoginPage et passe l'email pour rappel
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -361,9 +317,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    SizedBox(
-                      height: 40,
-                    ),
+                    SizedBox(height: 40),
                     Stack(
                       children: [
                         GestureDetector(
@@ -374,12 +328,6 @@ class _ProfilePageState extends State<ProfilePage> {
                             backgroundImage: _imageFile != null
                                 ? FileImage(_imageFile!)
                                 : null,
-
-                            //displaying a white person icon
-                            //when the imageFile is empty
-                            //donc quand y'a pas d'image stored yet
-                            //genre new account for example
-
                             child: _imageFile == null
                                 ? const Icon(
                                     CupertinoIcons.person_crop_circle_fill,
@@ -432,9 +380,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       leadingIcon: const Icon(CupertinoIcons.phone_fill),
                       inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(
-                          10,
-                        ),
+                        LengthLimitingTextInputFormatter(10),
                       ],
                     ),
                     const SizedBox(height: 80),
