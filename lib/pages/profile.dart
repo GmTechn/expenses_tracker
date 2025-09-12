@@ -1,14 +1,16 @@
 import 'dart:io';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:expenses_tracker/components/myappbar.dart';
 import 'package:expenses_tracker/components/mybutton.dart';
 import 'package:expenses_tracker/components/mynavbar.dart';
 import 'package:expenses_tracker/components/mytextfield.dart';
 import 'package:expenses_tracker/management/database.dart';
+import 'package:expenses_tracker/management/sessionmanager.dart';
 import 'package:expenses_tracker/models/users.dart';
 import 'package:expenses_tracker/pages/login.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ProfilePage extends StatefulWidget {
   final String email;
@@ -19,25 +21,41 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+//--- Generating textfield controllers
   final _fnameController = TextEditingController();
   final _lnameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
 
+//---Generating a file to locally store images, profile pictures
+//---Generating a string to hold the image string = photoPath
+//---Generating a user's instance
+
   File? _imageFile;
   String? _photoPath;
   AppUser? _user;
 
+//Generating a picker to pick images from both gallery and camera
+
   final _picker = ImagePicker();
+
+//---Generating an instance of the database
+
   final DatabaseManager _databaseManager = DatabaseManager();
 
+//--Checking is the user is logged in with a boolean
+
   bool _isLoading = false;
+
+//---Initialising state
 
   @override
   void initState() {
     super.initState();
     _loadProfile();
   }
+
+//---Disposing of the controllers after they held a value
 
   @override
   void dispose() {
@@ -48,23 +66,64 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
+//checking the state of the profile in the data
+//si le profile existe, it gets loaded with the recently saved data
+//en initializing la base de données
+
   Future<void> _loadProfile() async {
     setState(() => _isLoading = true);
 
-    await _databaseManager.initialisation();
+    try {
+      await _databaseManager.initialisation();
+    } catch (_) {}
 
-    // Vérifie si l'utilisateur existe
-    AppUser? user = await _databaseManager.getUserByEmail(widget.email);
+//Getting an instance of the app user in the database
+//using the function getUserByEmail
+//to be sure to display les information correspondante au user
+//that we need to
+//and if we do not get any user on doit rien display
+//pas d'information
+
+    AppUser? user;
+    try {
+      user = await _databaseManager.getUserByEmail(widget.email);
+    } catch (_) {
+      try {
+        user = await _databaseManager.getUserByEmail(widget.email);
+      } catch (_) {
+        user = null;
+      }
+    }
 
     if (!mounted) return;
 
     if (user != null) {
-      _user = user;
+      //Lorsqu'on retrouve un user dans la database
+      //we display all data related to him
+      //coming from the controllers
 
-      _fnameController.text = user.fname ?? '';
-      _lnameController.text = user.lname ?? '';
-      _emailController.text = user.email ?? widget.email;
-      _phoneController.text = user.phone ?? '';
+      if ((user.fname ?? '').isNotEmpty) {
+        _fnameController.text = user.fname;
+      }
+      if ((user.lname ?? '').isNotEmpty) {
+        _lnameController.text = user.lname;
+      }
+
+      //Pour l'email on display celui qui est dans la database
+      //ou alors ce qu'on receuill du Sign up
+
+      if ((user.email ?? '').isNotEmpty) {
+        _emailController.text = user.email;
+      } else if (_emailController.text.isEmpty) {
+        _emailController.text = widget.email;
+      }
+      if ((user.phone ?? '').isNotEmpty) {
+        _phoneController.text = user.phone;
+      }
+
+      // Set the image only if we have its path dans le file
+      //sinon si c'est empty on display le default avatar
+
       if (user.photoPath != null && user.photoPath!.isNotEmpty) {
         final f = File(user.photoPath!);
         if (f.existsSync()) {
@@ -72,13 +131,27 @@ class _ProfilePageState extends State<ProfilePage> {
           _photoPath = user.photoPath;
         }
       }
+
+      _user = user;
     } else {
-      // Si pas trouvé dans la DB, initialise juste l'email
-      _emailController.text = widget.email;
+      //If there is no user found dans la database don't clear the UI.
+      //but ensure email field has widget.email
+      //so nothing remains empty
+
+      if (_emailController.text.isEmpty && widget.email.isNotEmpty) {
+        _emailController.text = widget.email;
+      }
     }
+
+    //if the profile loads successfully
+    //le statut de isLoading devient faux parce qu'on a succeed
+    //to display the loaded user
 
     setState(() => _isLoading = false);
   }
+
+//----Generating the pick image function
+//---Picking the image from a source and setting it's quality to 70
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -89,21 +162,31 @@ class _ProfilePageState extends State<ProfilePage> {
           _photoPath = picked.path;
         });
 
+//Si le user is not null then on generate an instance de user
+//to whom you assign profile path that was just picked
+//and then on maj la database with the new path set
+//so when coming back we get the last set image
+//according to the info store in the db
+
         if (_user != null) {
           final updated = AppUser(
             id: _user!.id,
-            fname: _fnameController.text,
-            lname: _lnameController.text,
+            fname: _user!.fname,
+            lname: _user!.lname,
             email: _user!.email,
             password: _user!.password,
-            phone: _phoneController.text,
+            phone: _user!.phone,
             photoPath: _photoPath ?? '',
           );
-          await _databaseManager.updateAppUser(updated);
+          await _databaseManager.upsertAppUser(updated);
           _user = updated;
         }
       }
     } catch (e) {
+      //debugprint is a function that send a message in the console
+      //to print the error so we have an idea of what the error is
+      //aslo send a snackbar that displays the error for the user to know
+
       debugPrint('Image pick error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -112,6 +195,10 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     }
   }
+
+  //picker options helps us pick images from two sources
+  //when the camera icon is clicked on
+  //Gallery or camera
 
   void _showImagePickerOptions() {
     showModalBottomSheet(
@@ -141,40 +228,37 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Future<void> _updateProfile() async {
-    if (_user == null) return;
+  //when the profile is updated with new info
+  //they are store and if it's empty, the "no user message"
+  //gets displayed
 
+  Future<void> _updateProfile() async {
     final updated = AppUser(
-      id: _user!.id,
+      id: _user?.id, // garde l’id si déjà existant
       fname: _fnameController.text.trim(),
       lname: _lnameController.text.trim(),
       email: _emailController.text.trim(),
-      password: _user!.password,
+      password: _user?.password ?? '', // garde l’ancien mot de passe
       phone: _phoneController.text.trim(),
       photoPath: _photoPath ?? '',
     );
 
     try {
-      await _databaseManager.updateAppUser(updated);
+      await _databaseManager.upsertAppUser(updated);
       _user = updated;
       await _loadProfile();
 
       if (mounted) {
         showDialog(
           context: context,
-          builder: (_) => AlertDialog(
-            title: const Text('Success'),
-            content: const Text('Your changes have been saved.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
+          builder: (_) => const AlertDialog(
+            title: Text('Success'),
+            content: Text('Your changes have been saved.'),
           ),
         );
       }
     } catch (e) {
+      debugPrint('Update failed: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Update failed: $e')),
@@ -182,6 +266,11 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     }
   }
+
+  //this function cancels the changes the user might have wanted
+  //to make to their profile
+  //if the var doCancel is true you simply load the profile info
+  //that was lastly saved
 
   Future<void> _confirmCancel() async {
     final doCancel = await showDialog<bool>(
@@ -192,18 +281,27 @@ class _ProfilePageState extends State<ProfilePage> {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('No')),
+              child: const Text(
+                'No',
+              )),
           TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Yes')),
+              child: const Text(
+                'Yes',
+              )),
         ],
       ),
     );
+
+//doCancel acts here
 
     if (doCancel == true) {
       await _loadProfile();
     }
   }
+
+  //Showing full image when the user clicks on the image
+  //to make it bigger , you simply have to "not" the _imageFile
 
   void _showFullImage() {
     if (_imageFile == null) return;
@@ -217,24 +315,38 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _logout() {
+  //Generating the logout function
+  //that replaces the current page with the LoginPage
+  //meaning on revient vers le login by replacing it
+  //avec la page actuelle
+
+  void _logout() async {
+    if (_user != null) {
+      // ✅ Sauvegarde l'email courant dans la session
+      await SessionManager.saveCurrentUser(_user!.email);
+    }
+
+    if (!mounted) return;
+
+    // ✅ Redirige vers LoginPage et passe l'email pour rappel
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const LoginPage()),
+      MaterialPageRoute(
+        builder: (_) => LoginPage(email: _user?.email ?? ''),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: const Text('P R O F I L E',
-            style: TextStyle(color: Color(0xff050c20))),
-        elevation: 0,
+      backgroundColor: const Color(0xff181a1e),
+      appBar: myAppBar(
+        context,
+        'P R O F I L E',
         actions: [
           IconButton(
-            icon: const Icon(CupertinoIcons.power, color: Color(0xff050c20)),
+            icon: const Icon(CupertinoIcons.power, color: Colors.white),
             onPressed: _logout,
           ),
         ],
@@ -249,6 +361,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
+                    SizedBox(
+                      height: 40,
+                    ),
                     Stack(
                       children: [
                         GestureDetector(
@@ -259,6 +374,12 @@ class _ProfilePageState extends State<ProfilePage> {
                             backgroundImage: _imageFile != null
                                 ? FileImage(_imageFile!)
                                 : null,
+
+                            //displaying a white person icon
+                            //when the imageFile is empty
+                            //donc quand y'a pas d'image stored yet
+                            //genre new account for example
+
                             child: _imageFile == null
                                 ? const Icon(
                                     CupertinoIcons.person_crop_circle_fill,
@@ -282,43 +403,43 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 50),
                     Mytextfield(
                       controller: _fnameController,
                       hintText: 'First Name',
                       obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.person_fill,
-                          color: Color(0xff050c20)),
+                      leadingIcon: const Icon(CupertinoIcons.person_fill),
                     ),
                     const SizedBox(height: 20),
                     Mytextfield(
                       controller: _lnameController,
                       hintText: 'Last Name',
                       obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.person_fill,
-                          color: Color(0xff050c20)),
+                      leadingIcon: const Icon(CupertinoIcons.person_fill),
                     ),
                     const SizedBox(height: 20),
                     Mytextfield(
                       controller: _emailController,
                       hintText: 'Email',
                       obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.mail_solid,
-                          color: Color(0xff050c20)),
+                      leadingIcon: const Icon(CupertinoIcons.mail_solid),
                     ),
                     const SizedBox(height: 20),
                     Mytextfield(
                       controller: _phoneController,
-                      hintText: 'Phone',
+                      hintText: 'Phone Number',
                       obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.phone_fill,
-                          color: Color(0xff050c20)),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      leadingIcon: const Icon(CupertinoIcons.phone_fill),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(
+                          10,
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 80),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         MyButton(
                           textbutton: 'Update',

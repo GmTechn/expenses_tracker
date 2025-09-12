@@ -1,4 +1,4 @@
-import 'package:expenses_tracker/pages/dashboard.dart';
+import 'package:expenses_tracker/management/sessionmanager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,11 +20,18 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
+  //controllers
+
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
+//database instance
+
   final DatabaseManager _dbManager = DatabaseManager();
+
+  //google sign in var
+
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   bool _isPasswordVisible = false;
 
@@ -76,12 +83,13 @@ class _SignUpPageState extends State<SignUpPage> {
       );
 
       await _dbManager.insertAppUser(newUser);
+      await SessionManager.saveCurrentUser(newUser.email);
 
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => Dashboard(email: newUser.email),
+          builder: (context) => ProfilePage(email: newUser.email),
         ),
       );
     } catch (e) {
@@ -105,6 +113,7 @@ class _SignUpPageState extends State<SignUpPage> {
             photoPath: '',
           );
           await _dbManager.insertAppUser(newUser);
+          await SessionManager.saveCurrentUser(newUser.email);
         }
         Navigator.pushReplacement(
           context,
@@ -135,6 +144,7 @@ class _SignUpPageState extends State<SignUpPage> {
             photoPath: '',
           );
           await _dbManager.insertAppUser(newUser);
+          await SessionManager.saveCurrentUser(newUser.email);
         }
         Navigator.pushReplacement(
           context,
@@ -151,158 +161,159 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xff181a1e),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            // physics: AlwaysScrollableScrollPhysics(),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: IntrinsicHeight(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 80),
-                      const Icon(
-                        CupertinoIcons.chart_bar_circle_fill,
-                        size: 60,
-                        color: Colors.green,
-                      ),
-                      const SizedBox(height: 40),
-                      Text(
-                        'B U D G E T  B U D D Y',
-                        style: GoogleFonts.abel(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 30,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        const Icon(
+                          CupertinoIcons.chart_bar_circle_fill,
+                          size: 60,
+                          color: Colors.green,
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      const Text('Create your account here!',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500)),
-                      const SizedBox(height: 40),
-                      Mytextfield(
-                          controller: emailController,
-                          hintText: 'Email',
-                          obscureText: false,
+                        const SizedBox(height: 40),
+                        Text(
+                          'B U D G E T  B U D D Y',
+                          style: GoogleFonts.abel(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 30,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        const Text('Create your account here!',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500)),
+                        const SizedBox(height: 40),
+                        Mytextfield(
+                            controller: emailController,
+                            hintText: 'Email',
+                            obscureText: false,
+                            leadingIcon: const Icon(
+                              CupertinoIcons.envelope_fill,
+                            )),
+                        const SizedBox(height: 20),
+                        Mytextfield(
+                          controller: passwordController,
+                          hintText: 'Password',
+                          obscureText: !_isPasswordVisible,
                           leadingIcon: const Icon(
-                            Icons.email,
-                          )),
-                      const SizedBox(height: 20),
-                      Mytextfield(
-                        controller: passwordController,
-                        hintText: 'Password',
-                        obscureText: !_isPasswordVisible,
-                        leadingIcon: const Icon(
-                          Icons.lock,
-                        ),
-                        trailingIcon: IconButton(
-                          icon: Icon(
-                            _isPasswordVisible
-                                ? Icons.visibility
-                                : Icons.visibility_off,
+                            CupertinoIcons.lock_fill,
                           ),
-                          onPressed: () => setState(
-                              () => _isPasswordVisible = !_isPasswordVisible),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Mytextfield(
-                        controller: confirmPasswordController,
-                        hintText: 'Confirm Password',
-                        obscureText: !_isPasswordVisible,
-                        leadingIcon: const Icon(
-                          Icons.lock,
-                        ),
-                        trailingIcon: IconButton(
-                          icon: Icon(
-                            _isPasswordVisible
-                                ? Icons.visibility
-                                : Icons.visibility_off,
+                          trailingIcon: IconButton(
+                            icon: Icon(
+                              _isPasswordVisible
+                                  ? CupertinoIcons.eye_fill
+                                  : CupertinoIcons.eye_slash_fill,
+                            ),
+                            onPressed: () => setState(
+                                () => _isPasswordVisible = !_isPasswordVisible),
                           ),
-                          onPressed: () => setState(
-                              () => _isPasswordVisible = !_isPasswordVisible),
                         ),
-                      ),
-                      const SizedBox(height: 40),
-                      MyButton(
-                          textbutton: 'Sign Up',
-                          onTap: registerUser,
-                          buttonHeight: 40,
-                          buttonWidth: 200),
-                      const SizedBox(height: 40),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 25.0),
-                        child: Row(
+                        const SizedBox(height: 20),
+                        Mytextfield(
+                          controller: confirmPasswordController,
+                          hintText: 'Confirm Password',
+                          obscureText: !_isPasswordVisible,
+                          leadingIcon: const Icon(
+                            CupertinoIcons.lock_fill,
+                          ),
+                          trailingIcon: IconButton(
+                            icon: Icon(
+                              _isPasswordVisible
+                                  ? CupertinoIcons.eye_fill
+                                  : CupertinoIcons.eye_slash_fill,
+                            ),
+                            onPressed: () => setState(
+                                () => _isPasswordVisible = !_isPasswordVisible),
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                        MyButton(
+                            textbutton: 'Sign Up',
+                            onTap: registerUser,
+                            buttonHeight: 40,
+                            buttonWidth: 200),
+                        const SizedBox(height: 40),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 25.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Expanded(
+                                child: Divider(
+                                  thickness: .5,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 10),
+                              Text(
+                                'Or continue with',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Divider(
+                                  thickness: .5,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 50),
+                        Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            Expanded(
-                              child: Divider(
-                                thickness: .5,
-                                color: Colors.white,
-                              ),
+                            MySquareTile(
+                                imagePath: 'assets/images/google.png',
+                                onTap: signInWithGoogle),
+                            MySquareTile(
+                                imagePath: 'assets/images/apple.png',
+                                onTap: _handleAppleSignIn),
+                          ],
+                        ),
+                        const SizedBox(height: 40),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              "Already have an account? ",
+                              style: TextStyle(color: Colors.white),
                             ),
-                            SizedBox(width: 10),
-                            Text(
-                              'Or continue with',
-                              style: TextStyle(
-                                color: Colors.white,
-                              ),
-                            ),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Divider(
-                                thickness: .5,
-                                color: Colors.white,
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                              },
+                              child: const Text(
+                                "Login",
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 50),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          MySquareTile(
-                              imagePath: 'assets/images/google.png',
-                              onTap: signInWithGoogle),
-                          MySquareTile(
-                              imagePath: 'assets/images/apple.png',
-                              onTap: _handleAppleSignIn),
-                        ],
-                      ),
-                      const SizedBox(height: 40),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            "Already have an account? ",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.pop(context);
-                            },
-                            child: const Text(
-                              "Login",
-                              style: TextStyle(
-                                color: Colors.blue,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                    ],
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

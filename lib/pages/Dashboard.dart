@@ -25,18 +25,32 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
+//Generating database instance
+  final DatabaseManager _databaseManager = DatabaseManager();
+
 //creating an instance of an appuser = current user
 
-  final DatabaseManager _databaseManager = DatabaseManager();
   AppUser? _currentUser;
+
+//initialising state
 
   @override
   void initState() {
     super.initState();
-    _loadUser();
+    _loadUsers();
   }
 
-  Future<void> _loadUser() async {
+  //--Refreshing the page to reload the page
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadUsers();
+  }
+
+//loading users to display name on dashboard
+
+  Future<void> _loadUsers() async {
     await _databaseManager.initialisation();
     final user = await _databaseManager.getUserByEmail(widget.email);
     setState(() {
@@ -47,54 +61,14 @@ class _DashboardState extends State<Dashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xff181a1e),
       appBar: AppBar(
+        backgroundColor: const Color(0xff181a1e),
         automaticallyImplyLeading: false,
-        leading: IconButton(
-            onPressed: () => Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (context) => LoginPage())),
-            icon: const Icon(Icons.arrow_back)),
         title: const Text(
           'D A S H B O A R D',
-          style: TextStyle(color: Color(0xff050c20)),
+          style: TextStyle(color: Colors.white),
         ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ProfilePage(email: widget.email),
-                ),
-              );
-            },
-            icon: FutureBuilder<AppUser?>(
-              future: _databaseManager.getUserByEmail(widget.email),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const CircleAvatar(
-                    backgroundColor: Colors.white,
-                    radius: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  );
-                }
-                if (snapshot.hasData && snapshot.data!.photoPath.isNotEmpty) {
-                  final file = File(snapshot.data!.photoPath);
-                  if (file.existsSync()) {
-                    return CircleAvatar(
-                      radius: 18,
-                      backgroundImage: FileImage(file),
-                    );
-                  }
-                }
-                // Default icon if no photo
-                return const Icon(
-                  CupertinoIcons.person,
-                  color: Colors.white,
-                );
-              },
-            ),
-          ),
-        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -102,60 +76,106 @@ class _DashboardState extends State<Dashboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top bar
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  const SizedBox(width: 40),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Welcome back,',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        Row(
-                          children: [
-                            Text(
-                              _currentUser != null
-                                  ? "${_currentUser!.fname} ${_currentUser!.lname}"
-                                  : "Guest",
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  Stack(
-                    children: [
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(CupertinoIcons.bell,
-                            size: 28, color: Color(0xff050c20)),
+              /// Header Container : Profile button
+              /// Welcome message
+              /// Username
+              /// notifications bell
+
+              Container(
+                margin: const EdgeInsets.symmetric(
+                  vertical: 8,
+                ),
+                padding: EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: Color.fromARGB(255, 35, 37, 46),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    const SizedBox(width: 40),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => ProfilePage(
+                                    email: widget.email,
+                                  )),
+                        ).then((_) => _loadUsers());
+                      },
+                      child: CircleAvatar(
+                        radius: 26,
+                        backgroundColor: Colors.white,
+                        backgroundImage:
+                            (_currentUser?.photoPath ?? '').isNotEmpty &&
+                                    File(_currentUser!.photoPath!).existsSync()
+                                ? FileImage(File(_currentUser!.photoPath!))
+                                : null,
+                        child: (_currentUser?.photoPath ?? '').isEmpty
+                            ? const Icon(
+                                CupertinoIcons.person_fill,
+                                color: Color(0xff050c20),
+                              )
+                            : null,
                       ),
-                      Positioned(
-                          right: 10,
-                          top: 8,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                                color: Colors.red, shape: BoxShape.circle),
-                            child: const Text(
-                              '7',
-                              style: TextStyle(
-                                  color: Colors.white,
+                    ),
+                    SizedBox(
+                      width: 14,
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Welcome back,',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white54),
+                          ),
+                          Row(
+                            children: [
+                              Text(
+                                _currentUser != null
+                                    ? "${_currentUser!.fname} ${_currentUser!.lname}"
+                                    : "Guest",
+                                style: const TextStyle(
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 10),
-                            ),
-                          ))
-                    ],
-                  )
-                ],
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Stack(
+                      children: [
+                        IconButton(
+                          onPressed: () {},
+                          icon: const Icon(CupertinoIcons.bell_fill,
+                              size: 28, color: Colors.white),
+                        ),
+                        Positioned(
+                            right: 10,
+                            top: 8,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                  color: Colors.red, shape: BoxShape.circle),
+                              child: const Text(
+                                '7',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 10),
+                              ),
+                            ))
+                      ],
+                    )
+                  ],
+                ),
               ),
 
               const SizedBox(height: 20),
@@ -166,8 +186,7 @@ class _DashboardState extends State<Dashboard> {
                 cardnumber: "5412 7512 3412 3456",
                 expirydate: '12/25',
                 colorOne: const Color.fromARGB(255, 5, 77, 113),
-                colorTwo: Colors.amber.withOpacity(.5),
-                colorThree: Colors.amber.withOpacity(.5),
+                colorTwo: Colors.amber,
                 username: _currentUser != null
                     ? "${_currentUser!.fname} ${_currentUser!.lname}"
                     : "User",
@@ -226,7 +245,7 @@ class _DashboardState extends State<Dashboard> {
                 'Transactions',
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Color(0xff050c20),
+                    color: Colors.white,
                     fontSize: 18),
               ),
               const SizedBox(height: 10),
@@ -256,7 +275,7 @@ class _DashboardState extends State<Dashboard> {
                     MaterialPageRoute(
                         builder: (context) => const ListOfUsers()),
                   ).then((_) {
-                    _loadUser();
+                    _loadUsers();
                   });
                 },
                 buttonHeight: 40,

@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:expenses_tracker/components/mynavbar.dart';
 import 'package:expenses_tracker/management/database.dart';
@@ -221,19 +220,27 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
   @override
   Widget build(BuildContext context) {
-    Color primarycolor = Color(0xff050c20);
-
     return Scaffold(
+      backgroundColor: const Color(0xff181a1e),
       appBar: AppBar(
-        title: Text('T R A N S A C T I O N S'),
+        title: Text(
+          'T R A N S A C T I O N S',
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
         automaticallyImplyLeading: false,
+        backgroundColor: const Color(0xff181a1e),
       ),
       body: Column(
         children: [
           Expanded(
             child: _transactions.isEmpty
                 ? Center(
-                    child: Text("No transactions yet"),
+                    child: Text(
+                      "No transactions yet",
+                      style: TextStyle(color: Colors.white70),
+                    ),
                   )
                 : ListView.builder(
                     itemCount: _transactions.length,
@@ -249,17 +256,35 @@ class _TransactionsPageState extends State<TransactionsPage> {
                             : CircleAvatar(
                                 child: Icon(CupertinoIcons.shopping_cart),
                               ),
-                        title: Text(transacIndex.place),
+                        title: Text(
+                          transacIndex.place,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         subtitle: Text(
-                            "${transacIndex.date.day}/${transacIndex.date.month}/${transacIndex.date.year}"),
-                        trailing:
-                            Text('\$${transacIndex.amount.toStringAsFixed(2)}'),
+                          "${transacIndex.date.day}/${transacIndex.date.month}/${transacIndex.date.year}",
+                          style: TextStyle(color: Colors.white54),
+                        ),
+                        trailing: Text(
+                          '\$${transacIndex.amount.toStringAsFixed(2)}',
+                          style: TextStyle(color: Colors.white54),
+                        ),
                       );
                     },
                   ),
           ),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 25),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  width: .5,
+                  color: Colors.white54,
+                ),
+              ),
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 25, vertical: 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -268,6 +293,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
+                    color: Colors.white70,
                   ),
                 ),
                 Text(
@@ -275,31 +301,24 @@ class _TransactionsPageState extends State<TransactionsPage> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: Colors.white70,
                   ),
                 )
               ],
             ),
           ),
-          Padding(
-            padding: EdgeInsets.all(16.0),
-            child: ElevatedButton.icon(
-              onPressed: _openAddTransactionDialog,
-              icon: Icon(
-                CupertinoIcons.add,
-                color: primarycolor,
-              ),
-              label: Text(
-                "Add Transaction",
-                style: TextStyle(
-                  color: primarycolor,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(50, 50),
-              ),
-            ),
+          SizedBox(
+            height: 80,
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.green,
+        onPressed: () => _openAddTransactionDialog(),
+        child: const Icon(
+          CupertinoIcons.add,
+          color: Colors.white,
+        ),
       ),
       bottomNavigationBar: MyNavBar(currentIndex: 1, email: widget.email),
     );

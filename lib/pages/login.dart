@@ -2,6 +2,7 @@ import 'package:expenses_tracker/components/mybutton.dart';
 import 'package:expenses_tracker/components/mysquaretile.dart';
 import 'package:expenses_tracker/components/mytextfield.dart';
 import 'package:expenses_tracker/management/database.dart';
+import 'package:expenses_tracker/pages/dashboard.dart';
 import 'package:expenses_tracker/pages/forgotpass.dart';
 import 'package:expenses_tracker/pages/signup.dart';
 import 'package:flutter/cupertino.dart';
@@ -11,7 +12,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({super.key, required String email});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -113,10 +114,23 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => Dashboard(email: email),
+        ),
+      );
     } catch (e) {
       showErrorMessage("Login failed: $e");
     }
+
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Dashboard(email: email), // <-- ici on passe l'email
+      ),
+    );
   }
 
   //UI design and functions calling
@@ -127,138 +141,169 @@ class _LoginPageState extends State<LoginPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xff181a1e),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            CupertinoIcons.chart_bar_circle_fill,
-            color: Colors.green,
-            size: 60,
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'B U D G E T  B U D D Y',
-            style: GoogleFonts.abel(
-                fontWeight: FontWeight.bold, fontSize: 30, color: whiteColor),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Welcome back',
-                style: TextStyle(
-                  color: whiteColor,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 60),
-          Mytextfield(
-            controller: emailController,
-            hintText: 'Email',
-            obscureText: false,
-            leadingIcon:
-                Icon(CupertinoIcons.envelope_fill, color: Colors.white24),
-          ),
-          const SizedBox(height: 20),
-          Mytextfield(
-            controller: passwordController,
-            hintText: 'Password',
-            obscureText: !_isPasswordVisible,
-            leadingIcon: const Icon(
-              CupertinoIcons.lock_fill,
-              color: Colors.white24,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    _isPasswordVisible = !_isPasswordVisible;
-                  });
-                },
-                icon: Icon(
-                  _isPasswordVisible
-                      ? CupertinoIcons.eye_fill
-                      : CupertinoIcons.eye_slash_fill,
-                  color: whiteColor,
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const ForgotPasswordPage()),
-                  );
-                },
-                child: Text(
-                  'Forgot Password?',
-                  style: TextStyle(
-                    color: whiteColor,
-                    fontWeight: FontWeight.bold,
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          CupertinoIcons.chart_bar_circle_fill,
+                          color: Colors.green,
+                          size: 60,
+                        ),
+                        const SizedBox(height: 40),
+                        Text(
+                          'B U D G E T  B U D D Y',
+                          style: GoogleFonts.abel(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 30,
+                              color: whiteColor),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Welcome back!',
+                              style: TextStyle(
+                                color: whiteColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 40),
+                        Mytextfield(
+                          controller: emailController,
+                          hintText: 'Email',
+                          obscureText: false,
+                          leadingIcon: Icon(CupertinoIcons.envelope_fill,
+                              color: Colors.white24),
+                        ),
+                        const SizedBox(height: 20),
+                        Mytextfield(
+                          controller: passwordController,
+                          hintText: 'Password',
+                          obscureText: !_isPasswordVisible,
+                          leadingIcon: const Icon(
+                            CupertinoIcons.lock_fill,
+                            color: Colors.white24,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  _isPasswordVisible = !_isPasswordVisible;
+                                });
+                              },
+                              icon: Icon(
+                                _isPasswordVisible
+                                    ? CupertinoIcons.eye_fill
+                                    : CupertinoIcons.eye_slash_fill,
+                                color: whiteColor,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ForgotPasswordPage()),
+                                );
+                              },
+                              child: Text(
+                                'Forgot Password?',
+                                style: TextStyle(
+                                  color: whiteColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 40),
+                        MyButton(
+                          textbutton: 'Login',
+                          onTap: loginUser,
+                          buttonHeight: 40,
+                          buttonWidth: 200,
+                        ),
+                        const SizedBox(height: 40),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 25.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Expanded(
+                                  child: Divider(
+                                      thickness: .5, color: whiteColor)),
+                              SizedBox(width: 10),
+                              Text('Or continue with',
+                                  style: TextStyle(color: whiteColor)),
+                              SizedBox(width: 10),
+                              Expanded(
+                                  child: Divider(
+                                      thickness: .5, color: whiteColor)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 50),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            MySquareTile(
+                                imagePath: 'assets/images/google.png',
+                                onTap: signInWithGoogle),
+                            MySquareTile(
+                                imagePath: 'assets/images/apple.png',
+                                onTap: _handleAppleSignIn),
+                          ],
+                        ),
+                        const SizedBox(height: 40),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text("Don't have an account?",
+                                style: TextStyle(color: whiteColor)),
+                            GestureDetector(
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SignUpPage(),
+                                ),
+                              ),
+                              child: const Text(
+                                ' Sign up',
+                                style: TextStyle(
+                                    color: Colors.blue,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 40),
-          MyButton(
-            textbutton: 'Login',
-            onTap: loginUser,
-            buttonHeight: 40,
-            buttonWidth: 200,
-          ),
-          const SizedBox(height: 40),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 25.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Expanded(child: Divider(thickness: .5, color: whiteColor)),
-                SizedBox(width: 10),
-                Text('Or continue with', style: TextStyle(color: whiteColor)),
-                SizedBox(width: 10),
-                Expanded(child: Divider(thickness: .5, color: whiteColor)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 50),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              MySquareTile(
-                  imagePath: 'assets/images/google.png',
-                  onTap: signInWithGoogle),
-              MySquareTile(
-                  imagePath: 'assets/images/apple.png',
-                  onTap: _handleAppleSignIn),
-            ],
-          ),
-          const SizedBox(height: 50),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text("Don't have an account?",
-                  style: TextStyle(color: whiteColor)),
-              GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SignUpPage()),
-                ),
-                child: const Text(
-                  ' Sign up',
-                  style: TextStyle(
-                      color: Colors.blue, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-        ],
+            );
+          },
+        ),
       ),
     );
   }

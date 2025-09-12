@@ -169,7 +169,7 @@ class _ListOfUsersState extends State<ListOfUsers> {
                     photoPath: user.photoPath,
                   );
 
-                  await _databaseManager.updateAppUser(updatedUser as AppUser);
+                  await _databaseManager.upsertAppUser(updatedUser as AppUser);
 
                   Navigator.pop(context);
                   _loadUsers();

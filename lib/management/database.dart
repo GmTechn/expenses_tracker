@@ -8,21 +8,19 @@ import 'package:expenses_tracker/models/users.dart';
 class DatabaseManager {
   Database? _database;
 
-//initializing a database
-
   Future<Database> get database async {
     if (_database != null) return _database!;
     await initialisation();
     return _database!;
   }
 
-//---- Generating a database with user info to store----
-
+  /// ✅ Initialise une seule fois avec version 1
   Future<void> initialisation() async {
     _database = await openDatabase(
       join(await getDatabasesPath(), 'users_database.db'),
-      version: 5, // ✅ bump version when schema changes
+      version: 1,
       onCreate: (db, version) async {
+        // --- Users ---
         await db.execute(
           '''CREATE TABLE users(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,119 +33,84 @@ class DatabaseManager {
           )''',
         );
 
-        //--- generating transactions table ---
+        // --- Transactions ---
         await db.execute(
           '''CREATE TABLE transactions (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          email TEXT,
-          place TEXT,
-          amount REAL,
-          date TEXT,
-          logoPath TEXT
-          
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT,
+            place TEXT,
+            amount REAL,
+            date TEXT,
+            logoPath TEXT
           )''',
         );
 
-        //--- Cards -----///
-
+        // --- Cards ---
         await db.execute(
           '''CREATE TABLE cards(
-
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT,
-        amount TEXT,
-        cardnumber TEXT,
-        expirydate TEXT,
-        username TEXT,
-        colorOne INTEGER,
-        colorTwo INTEGER,
-        colorThree INTEGER
-        )''',
-        );
-      },
-
-      //---Updating user profile----
-      onUpgrade: (db, oldVersion, newVersion) async {
-        // ✅ Ensure the users table always exists
-        await db.execute(
-          '''CREATE TABLE IF NOT EXISTS users(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            fname TEXT,
-            lname TEXT,
-            email TEXT UNIQUE,
-            password TEXT,
-            phone TEXT,
-            photoPath TEXT
+            email TEXT,
+            amount TEXT,
+            cardnumber TEXT,
+            expirydate TEXT,
+            username TEXT,
+            colorOne INTEGER,
+            colorTwo INTEGER,
+            colorThree INTEGER
           )''',
         );
-
-        //Ensuring transaction exist
-
-        await db.execute(
-          '''CREATE TABLE IF NOT EXISTS transactions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT,
-        place TEXT,
-        amount TEXT,
-        date TEXT,
-        logoPath TEXT
-        
-        )''',
-        );
-
-        //Ensuring cards are stored
-        await db.execute('''
-
-          CREATE TABLE IF NOT EXISTS cards(
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  email TEXT,
-                  amount TEXT,
-                  cardnumber TEXT,
-                  expirydate TEXT,
-                  username TEXT,
-                  colorOne INTEGER,
-                  colorTwo INTEGER,
-                  colorThree INTEGER
-          )
-        ''');
       },
     );
   }
 
-  /// ✅ Wipes the entire database (useful for testing)
+  /// ✅ Toujours clear la DB au lancement (dev only)
   Future<void> clearDatabase() async {
     final path = join(await getDatabasesPath(), 'users_database.db');
     if (await File(path).exists()) {
       await deleteDatabase(path);
     }
-    _database = null; // force re-init on next call
+    _database = null;
   }
 
-  ///------------    USERS   -------------////
-
+  // ------------ USERS ------------- //
   Future<List<AppUser>> getAllAppUsers() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('users');
+    final maps = await db.query('users');
     return maps.map((map) => AppUser.fromMap(map)).toList();
   }
 
   Future<void> insertAppUser(AppUser user) async {
     final db = await database;
-    await db.insert(
-      'users',
-      user.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('users', user.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<void> updateAppUser(AppUser user) async {
+  Future<void> upsertAppUser(AppUser user) async {
     final db = await database;
-    await db.update(
+
+    // Vérifie si un user existe déjà avec le même email
+    final existing = await db.query(
       'users',
-      user.toMap(),
-      where: 'id = ?',
-      whereArgs: [user.id],
+      where: 'email = ?',
+      whereArgs: [user.email],
     );
+
+    if (existing.isEmpty) {
+      // Insert si le user n'existe pas encore
+      await db.insert(
+        'users',
+        user.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } else {
+      // Update si déjà présent
+      await db.update(
+        'users',
+        user.toMap(),
+        where: 'email = ?',
+        whereArgs: [user.email],
+      );
+    }
   }
 
   Future<void> deleteAppUser(int id) async {
@@ -163,8 +126,7 @@ class DatabaseManager {
     return null;
   }
 
-  //// --------- TRANSACTIONS ----------/////
-
+  // --------- TRANSACTIONS ---------- //
   Future<void> insertTransaction({
     required String email,
     required String place,
@@ -186,7 +148,6 @@ class DatabaseManager {
     );
   }
 
-  ///Geting all user's transactions
   Future<List<Map<String, dynamic>>> getTransactions(String email) async {
     final db = await database;
     return await db.query(
@@ -197,28 +158,18 @@ class DatabaseManager {
     );
   }
 
-  ///Deleting a transaction
-  ///
   Future<void> deleteTransaction(int id) async {
     final db = await database;
     await db.delete('transactions', where: 'id = ?', whereArgs: [id]);
   }
 
-  ///-------- CARDS ---------///
-
-  ///inserting a new card  : CREATE
-
+  // --------- CARDS ---------- //
   Future<void> insertCard(CardModel card) async {
     final db = await database;
-    await db.insert(
-      'cards',
-      card.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('cards', card.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  ///READ
-  ///
   Future<List<CardModel>> getCards(String email) async {
     final db = await database;
     final result =
@@ -226,20 +177,13 @@ class DatabaseManager {
     return result.map((map) => CardModel.fromMap(map)).toList();
   }
 
-  ///UPDATE
-
   Future<void> updateCard(CardModel card) async {
     final db = await database;
-    await db.update(
-      'cards',
-      card.toMap(),
-      where: 'id=?',
-      whereArgs: [card.id],
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.update('cards', card.toMap(),
+        where: 'id=?',
+        whereArgs: [card.id],
+        conflictAlgorithm: ConflictAlgorithm.replace);
   }
-
-  ///DELETE
 
   Future<void> deleteCard(int id) async {
     final db = await database;

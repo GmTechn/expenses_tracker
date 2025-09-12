@@ -1,3 +1,4 @@
+import 'package:expenses_tracker/components/myappbar.dart';
 import 'package:expenses_tracker/components/mycards.dart';
 import 'package:expenses_tracker/components/mynavbar.dart';
 import 'package:expenses_tracker/components/mytextfield.dart';
@@ -5,6 +6,7 @@ import 'package:expenses_tracker/management/database.dart';
 import 'package:expenses_tracker/models/cards.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+// ignore: depend_on_referenced_packages
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter/services.dart';
 
@@ -57,7 +59,6 @@ class _MyCardsPageState extends State<MyCardsPage> {
 
     Color color1 = card != null ? Color(card.colorOne) : Colors.blue;
     Color color2 = card != null ? Color(card.colorTwo) : Colors.deepPurple;
-    Color color3 = card != null ? Color(card.colorThree) : Colors.orange;
 
     showDialog(
         context: context,
@@ -88,7 +89,6 @@ class _MyCardsPageState extends State<MyCardsPage> {
                       ),
                       inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
-                        // _CardNumberFormatter(),
                       ],
                     ),
                     SizedBox(
@@ -149,13 +149,12 @@ class _MyCardsPageState extends State<MyCardsPage> {
                             radius: 20,
                           ),
                         ),
-                        const SizedBox(width: 20),
                         GestureDetector(
                           onTap: () {
                             showDialog(
                               context: context,
                               builder: (_) => AlertDialog(
-                                title: const Text('Pick Second Color'),
+                                title: const Text('Pick First Color'),
                                 content: BlockPicker(
                                   pickerColor: color2,
                                   onColorChanged: (c) {
@@ -173,33 +172,6 @@ class _MyCardsPageState extends State<MyCardsPage> {
                           },
                           child: CircleAvatar(
                             backgroundColor: color2,
-                            radius: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 20),
-                        GestureDetector(
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (_) => AlertDialog(
-                                title: const Text('Pick Third Color'),
-                                content: BlockPicker(
-                                  pickerColor: color3,
-                                  onColorChanged: (c) {
-                                    setStateDialog(() => color3 = c);
-                                  },
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: const Text('Ok'),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                          child: CircleAvatar(
-                            backgroundColor: color3,
                             radius: 20,
                           ),
                         ),
@@ -228,7 +200,6 @@ class _MyCardsPageState extends State<MyCardsPage> {
                         username: usernameController.text,
                         colorOne: color1.value,
                         colorTwo: color2.value,
-                        colorThree: color3.value,
                       );
 
                       if (card == null) {
@@ -253,21 +224,14 @@ class _MyCardsPageState extends State<MyCardsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'M Y  C A R D S',
-          style: TextStyle(color: Color(0xff050c20)),
-        ),
-      ),
+      backgroundColor: const Color(0xff181a1e),
+      appBar: myAppBar(context, 'M Y  C A R D S'),
       body: _userCards.isEmpty
           ? const Center(
               child: Text(
                 "No cards yet. Add one!",
                 style: TextStyle(
-                  color: Color(
-                    0xff050c20,
-                  ),
+                  color: Colors.white70,
                 ),
               ),
             )
@@ -284,10 +248,7 @@ class _MyCardsPageState extends State<MyCardsPage> {
                     expirydate: card.expirydate,
                     username: card.username,
                     colorOne: Color(card.colorOne),
-                    colorTwo: Color(
-                      card.colorTwo,
-                    ),
-                    colorThree: Color(card.colorThree),
+                    colorTwo: Color(card.colorTwo),
                   ),
                 );
               },
@@ -296,7 +257,7 @@ class _MyCardsPageState extends State<MyCardsPage> {
               ),
             ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Color(0xff050c20),
+        backgroundColor: Colors.green,
         onPressed: () => _cardAddEditDialog(),
         child: const Icon(
           CupertinoIcons.add,

@@ -9,17 +9,17 @@ class AppUser {
 
   AppUser({
     this.id,
-    required this.fname,
-    required this.lname,
+    this.fname = '',
+    this.lname = '',
     required this.email,
-    required this.password,
+    this.password = '',
     this.phone = '',
     this.photoPath = '',
   });
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
+      'id': id, // tu peux aussi choisir de ne pas inclure si null
       'fname': fname,
       'lname': lname,
       'email': email,
@@ -32,12 +32,12 @@ class AppUser {
   factory AppUser.fromMap(Map<String, dynamic> map) {
     return AppUser(
       id: map['id'],
-      fname: map['fname'],
-      lname: map['lname'],
-      email: map['email'],
-      password: map['password'],
-      phone: map['phone'],
-      photoPath: map['photoPath'],
+      fname: map['fname'] ?? '',
+      lname: map['lname'] ?? '',
+      email: map['email'] ?? '',
+      password: map['password'] ?? '',
+      phone: map['phone'] ?? '',
+      photoPath: map['photoPath'] ?? '',
     );
   }
 }

@@ -20,7 +20,7 @@ class MyNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BottomAppBar(
-      color: Colors.white,
+      color: const Color(0xff181a1e),
       child: SizedBox(
         height: 56,
         width: MediaQuery.of(context).size.width,
@@ -53,7 +53,7 @@ class MyNavBar extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                         builder: (context) => TransactionsPage(
-                              email: '',
+                              email: email,
                             )),
                   );
                 },
@@ -78,9 +78,11 @@ class MyNavBar extends StatelessWidget {
                 selected: currentIndex == 3,
                 onPressed: () {
                   Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => ProfilePage(email: email)));
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProfilePage(email: email),
+                    ),
+                  );
                 },
               ),
             ],
@@ -105,7 +107,7 @@ class IconBottomBar extends StatelessWidget {
   final bool selected;
   final Function() onPressed;
 
-  final primaryColor = const Color(0xff050C20);
+  final primaryColor = Colors.green;
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +119,7 @@ class IconBottomBar extends StatelessWidget {
           icon: Icon(
             icon,
             size: selected ? 30 : 25, // 👈 Profile icon gets bigger
-            color: selected ? primaryColor : Colors.black54,
+            color: selected ? primaryColor : Colors.white24,
           ),
         ),
         Text(
@@ -125,7 +127,7 @@ class IconBottomBar extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             height: .1,
-            color: selected ? primaryColor : Colors.grey.withOpacity(.75),
+            color: selected ? primaryColor : Colors.white24,
           ),
         ),
       ],

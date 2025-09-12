@@ -10,7 +10,6 @@ class MyCards extends StatelessWidget {
     required this.username,
     required this.colorOne,
     required this.colorTwo,
-    required this.colorThree,
   });
 
   final String amount;
@@ -19,7 +18,6 @@ class MyCards extends StatelessWidget {
   final String username;
   final Color colorOne;
   final Color colorTwo;
-  final Color colorThree;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +33,6 @@ class MyCards extends StatelessWidget {
               colors: [
                 colorOne,
                 colorTwo,
-                colorThree,
               ])),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

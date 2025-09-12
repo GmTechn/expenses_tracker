@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 class CardModel {
   final int? id;
   final String email;
@@ -9,18 +7,17 @@ class CardModel {
   final String username;
   final int colorOne;
   final int colorTwo;
-  final int colorThree;
 
-  CardModel(
-      {this.id,
-      required this.email,
-      required this.amount,
-      required this.cardnumber,
-      required this.expirydate,
-      required this.username,
-      required this.colorOne,
-      required this.colorTwo,
-      required this.colorThree});
+  CardModel({
+    this.id,
+    required this.email,
+    required this.amount,
+    required this.cardnumber,
+    required this.expirydate,
+    required this.username,
+    required this.colorOne,
+    required this.colorTwo,
+  });
 
   Map<String, dynamic> toMap() {
     return {
@@ -32,7 +29,6 @@ class CardModel {
       'username': username,
       'colorOne': colorOne,
       'colorTwo': colorTwo,
-      'colorThree': colorThree,
     };
   }
 
@@ -46,7 +42,6 @@ class CardModel {
       username: map['username'],
       colorOne: map['colorOne'],
       colorTwo: map['colorTwo'],
-      colorThree: map['colorThree'],
     );
   }
 }

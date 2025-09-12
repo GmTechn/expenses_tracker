@@ -18,15 +18,16 @@ class Mytransaction extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-      padding: EdgeInsets.all(12),
+      padding: EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 255, 255, 255),
+        color: Color.fromARGB(255, 35, 37, 46),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-              color: Colors.grey.withOpacity(.1),
-              blurRadius: 6,
-              offset: const Offset(0, 3)),
+            color: Colors.black,
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
         ],
       ),
       child: Row(
@@ -35,7 +36,7 @@ class Mytransaction extends StatelessWidget {
           CircleAvatar(
             radius: 24,
             backgroundImage: AssetImage(logo),
-            backgroundColor: Colors.grey.shade200,
+            backgroundColor: Color.fromARGB(255, 35, 37, 46),
           ),
           const SizedBox(
             width: 16,
@@ -48,14 +49,17 @@ class Mytransaction extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.white),
               ),
               const SizedBox(
                 height: 4,
               ),
               Text(
                 date,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                style: TextStyle(color: Colors.grey, fontSize: 13),
               ),
 
               //Amount
