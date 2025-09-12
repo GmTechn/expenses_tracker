@@ -6,11 +6,13 @@ import 'package:flutter/material.dart';
 
 class Transaction {
   final String place;
+  final String? logoUrl; // URL du logo
   final DateTime date;
   final double amount;
 
   Transaction({
     required this.place,
+    this.logoUrl,
     required this.date,
     required this.amount,
   });
@@ -43,6 +45,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
         data.map(
           (t) => Transaction(
             place: t['place'],
+            logoUrl: t['logoUrl'],
             date: DateTime.parse(t['date']),
             amount: t['amount'],
           ),
@@ -55,10 +58,13 @@ class _TransactionsPageState extends State<TransactionsPage> {
   final _placeController = TextEditingController();
   final _amountController = TextEditingController();
 
+  // Pour stocker le logo choisi
+  String? _selectedLogoUrl;
+
   double get totalTransactionsAmount =>
       _transactions.fold(0, (sum, item) => sum + item.amount);
 
-  // Mapping of brands to internet logos
+  // Mapping de tes logos avec URL
   final Map<String, String> brandLogos = {
     'Apple':
         'https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg',
@@ -75,6 +81,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
         place: _placeController.text,
         date: DateTime.now(),
         amount: double.parse(_amountController.text),
+        logoUrl: _selectedLogoUrl, // logo choisi
       );
 
       await dbManager.insertTransaction(
@@ -82,13 +89,14 @@ class _TransactionsPageState extends State<TransactionsPage> {
         place: newTransaction.place,
         amount: newTransaction.amount,
         date: newTransaction.date,
-        logoPath: null, // On ne sauvegarde plus de logo local
+        logoPath: _selectedLogoUrl, // on sauvegarde l’URL
       );
 
       setState(() {
         _transactions.insert(0, newTransaction);
         _placeController.clear();
         _amountController.clear();
+        _selectedLogoUrl = null;
       });
 
       Navigator.pop(context);
@@ -134,6 +142,54 @@ class _TransactionsPageState extends State<TransactionsPage> {
                           const TextInputType.numberWithOptions(decimal: true),
                       validator: (value) =>
                           value!.isEmpty ? "Enter amount" : null,
+                    ),
+                    const SizedBox(height: 10),
+                    // Dropdown pour sélectionner un logo
+                    DropdownButtonFormField<String>(
+                      value: _selectedLogoUrl,
+                      dropdownColor: const Color(0xff181a1e),
+                      decoration: const InputDecoration(
+                        filled: true,
+                        fillColor: Color.fromARGB(255, 40, 43, 50),
+                        border: OutlineInputBorder(),
+                      ),
+                      hint: const Text(
+                        "Select a logo",
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      items: brandLogos.entries
+                          .map(
+                            (e) => DropdownMenuItem(
+                              value: e.value,
+                              child: Row(
+                                children: [
+                                  Image.network(
+                                    e.value,
+                                    height: 20,
+                                    width: 20,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            const Icon(
+                                      CupertinoIcons.cart_fill,
+                                      size: 20,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    e.key,
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedLogoUrl = val;
+                        });
+                      },
                     ),
                   ],
                 ),
@@ -197,15 +253,16 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     itemBuilder: (ctx, index) {
                       final transacIndex = _transactions[index];
                       return ListTile(
-                        leading: brandLogos.containsKey(transacIndex.place)
+                        leading: transacIndex.logoUrl != null
                             ? CircleAvatar(
-                                backgroundImage: NetworkImage(
-                                    brandLogos[transacIndex.place]!),
+                                backgroundImage:
+                                    NetworkImage(transacIndex.logoUrl!),
                               )
                             : const CircleAvatar(
+                                backgroundColor: Colors.white,
                                 child: Icon(
-                                  CupertinoIcons.shopping_cart,
-                                  color: Colors.white,
+                                  CupertinoIcons.cart_fill,
+                                  color: Colors.black,
                                 ),
                               ),
                         title: Text(
