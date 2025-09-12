@@ -61,7 +61,16 @@ class _MyCardsPageState extends State<MyCardsPage> {
       builder: (ctx) {
         return StatefulBuilder(builder: (ctx, setStateDialog) {
           return AlertDialog(
-            title: Text(card == null ? 'Add New Card' : 'Edit Card'),
+            backgroundColor: Color(0xff181a1e),
+            title: Text(
+              card == null ? 'Add New Card' : 'Edit Card',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             content: SingleChildScrollView(
               child: Column(
                 children: [
@@ -94,7 +103,10 @@ class _MyCardsPageState extends State<MyCardsPage> {
                     leadingIcon: Icon(CupertinoIcons.person),
                   ),
                   SizedBox(height: 20),
-                  Text('Pick Card Colors:'),
+                  Text(
+                    'Pick Card Colors:',
+                    style: TextStyle(color: Colors.white70),
+                  ),
                   SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -153,39 +165,54 @@ class _MyCardsPageState extends State<MyCardsPage> {
               ),
             ),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text("Cancel"),
-              ),
-              TextButton(
-                onPressed: () async {
-                  if (amountController.text.isNotEmpty &&
-                      cardNumberController.text.isNotEmpty &&
-                      expiryController.text.isNotEmpty &&
-                      usernameController.text.isNotEmpty) {
-                    final newCard = CardModel(
-                      id: card?.id,
-                      email: widget.email,
-                      amount: "\$${amountController.text}",
-                      cardnumber: cardNumberController.text,
-                      expirydate: expiryController.text,
-                      username: usernameController.text,
-                      colorOne: color1.value,
-                      colorTwo: color2.value,
-                    );
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: const Text(
+                      "Cancel",
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      if (amountController.text.isNotEmpty &&
+                          cardNumberController.text.isNotEmpty &&
+                          expiryController.text.isNotEmpty &&
+                          usernameController.text.isNotEmpty) {
+                        final newCard = CardModel(
+                          id: card?.id,
+                          email: widget.email,
+                          amount: "\$${amountController.text}",
+                          cardnumber: cardNumberController.text,
+                          expirydate: expiryController.text,
+                          username: usernameController.text,
+                          colorOne: color1.value,
+                          colorTwo: color2.value,
+                          isDefault: card?.isDefault ??
+                              0, // ✅ garde le statut de default
+                        );
 
-                    if (card == null) {
-                      await _databaseManager.insertCard(newCard);
-                    } else {
-                      await _databaseManager.updateCard(newCard);
-                    }
+                        if (card == null) {
+                          await _databaseManager.insertCard(newCard);
+                        } else {
+                          await _databaseManager.updateCard(newCard);
+                        }
 
-                    await _loadCards();
+                        await _loadCards();
 
-                    if (mounted) Navigator.of(ctx).pop();
-                  }
-                },
-                child: Text(card == null ? "Add" : "Save"),
+                        if (mounted) Navigator.of(ctx).pop();
+                      }
+                    },
+                    child: Text(
+                      card == null ? "Add" : "Save",
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
               ),
             ],
           );
@@ -241,7 +268,7 @@ class _MyCardsPageState extends State<MyCardsPage> {
                                 _loadCards();
                               },
                               buttonHeight: 50,
-                              buttonWidth: 125,
+                              buttonWidth: 180,
                             ),
                     ],
                   ),

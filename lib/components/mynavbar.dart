@@ -39,7 +39,7 @@ class MyNavBar extends StatelessWidget {
                     MaterialPageRoute(
                       builder: (context) => Dashboard(
                         email: email,
-                      ), // required
+                      ),
                     ),
                   );
                 },
@@ -69,7 +69,18 @@ class MyNavBar extends StatelessWidget {
                         builder: (context) => MyCardsPage(
                               email: email,
                             )),
-                  );
+                  ).then((_) {
+                    // ✅ Recharge la Default Card et les infos utilisateur
+                    // quand on revient sur le Dashboard
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Dashboard(
+                          email: email,
+                        ),
+                      ),
+                    );
+                  });
                 },
               ),
               IconBottomBar(
@@ -118,7 +129,7 @@ class IconBottomBar extends StatelessWidget {
           onPressed: onPressed,
           icon: Icon(
             icon,
-            size: selected ? 30 : 25, // 👈 Profile icon gets bigger
+            size: selected ? 30 : 25,
             color: selected ? primaryColor : Colors.white24,
           ),
         ),

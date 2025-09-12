@@ -42,7 +42,7 @@ class MyApp extends StatelessWidget {
       /// ✅ Si user existe → Dashboard
       /// ✅ Sinon → SignUp (car DB est vide au lancement)
       home: initialEmail != null && initialEmail!.isNotEmpty
-          ? LoginPage(
+          ? MyCardsPage(
               email: '',
             )
           : Dashboard(email: initialEmail!),

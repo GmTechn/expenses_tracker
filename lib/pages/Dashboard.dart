@@ -5,7 +5,9 @@ import 'package:expenses_tracker/components/mycards.dart';
 import 'package:expenses_tracker/components/mynavbar.dart';
 import 'package:expenses_tracker/components/mytransaction.dart';
 import 'package:expenses_tracker/management/database.dart';
+import 'package:expenses_tracker/models/cards.dart';
 import 'package:expenses_tracker/models/users.dart';
+import 'package:expenses_tracker/pages/cardspage.dart';
 import 'package:expenses_tracker/pages/login.dart';
 import 'package:expenses_tracker/pages/profile.dart';
 import 'package:expenses_tracker/services/listofusers.dart';
@@ -32,12 +34,16 @@ class _DashboardState extends State<Dashboard> {
 
   AppUser? _currentUser;
 
+//Default card
+  CardModel? _defaultCard;
+
 //initialising state
 
   @override
   void initState() {
     super.initState();
     _loadUsers();
+    _loadDefaultCard();
   }
 
   //--Refreshing the page to reload the page
@@ -46,6 +52,7 @@ class _DashboardState extends State<Dashboard> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _loadUsers();
+    _loadDefaultCard();
   }
 
 //loading users to display name on dashboard
@@ -60,12 +67,13 @@ class _DashboardState extends State<Dashboard> {
 
 //loading cards to display
 
-// Future<void> _loadDefaultCard() async {
-//   final card = await _databaseManager.getDefaultCard(widget.email);
-//   setState(() {
-//     _defaultCard = card;
-//   });
-// }
+  //loading default card to display
+  Future<void> _loadDefaultCard() async {
+    final card = await _databaseManager.getDefaultCard(widget.email);
+    setState(() {
+      _defaultCard = card;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -190,16 +198,48 @@ class _DashboardState extends State<Dashboard> {
               const SizedBox(height: 20),
 
               // Card
-              MyCards(
-                amount: '\$542.45',
-                cardnumber: "5412 7512 3412 3456",
-                expirydate: '12/25',
-                colorOne: const Color.fromARGB(255, 5, 77, 113),
-                colorTwo: Colors.amber,
-                username: _currentUser != null
-                    ? "${_currentUser!.fname} ${_currentUser!.lname}"
-                    : "User",
-              ),
+              if (_defaultCard != null)
+                MyCards(
+                  amount: _defaultCard!.amount,
+                  cardnumber: _defaultCard!.cardnumber,
+                  expirydate: _defaultCard!.expirydate,
+                  colorOne: Color(_defaultCard!.colorOne),
+                  colorTwo: Color(_defaultCard!.colorTwo),
+                  username: _defaultCard!.username,
+                )
+              else
+                Column(
+                  children: [
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MyCardsPage(
+                              email: widget.email,
+                            ),
+                          ),
+                        );
+                      },
+                      label: Text(
+                        'Set up default card',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      icon: Icon(
+                        CupertinoIcons.creditcard_fill,
+                        color: Colors.white,
+                      ),
+                    ),
+                    MyCards(
+                      amount: '0.00\$',
+                      cardnumber: '0000 0000 0000 0000',
+                      expirydate: 'mm/yy',
+                      username: 'no username',
+                      colorOne: Colors.blue,
+                      colorTwo: Colors.amber,
+                    ),
+                  ],
+                ),
 
               const SizedBox(height: 20),
 
