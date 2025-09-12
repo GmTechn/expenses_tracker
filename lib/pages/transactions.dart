@@ -1,22 +1,16 @@
-import 'dart:io';
-
 import 'package:expenses_tracker/components/mynavbar.dart';
+import 'package:expenses_tracker/components/mytextfield.dart';
 import 'package:expenses_tracker/management/database.dart';
 import 'package:flutter/cupertino.dart';
-
 import 'package:flutter/material.dart';
-
-import 'package:image_picker/image_picker.dart';
 
 class Transaction {
   final String place;
-  final File? logo;
   final DateTime date;
   final double amount;
 
   Transaction({
     required this.place,
-    required this.logo,
     required this.date,
     required this.amount,
   });
@@ -32,15 +26,8 @@ class TransactionsPage extends StatefulWidget {
 }
 
 class _TransactionsPageState extends State<TransactionsPage> {
-//generating a list of transactions
-
   final List<Transaction> _transactions = [];
-
-//calling the database
-
   final dbManager = DatabaseManager();
-
-//initializing state
 
   @override
   void initState() {
@@ -48,18 +35,14 @@ class _TransactionsPageState extends State<TransactionsPage> {
     _loadTransactions();
   }
 
-//loading transa from db
-
   Future<void> _loadTransactions() async {
     final data = await dbManager.getTransactions(widget.email);
-
     setState(() {
       _transactions.clear();
       _transactions.addAll(
         data.map(
           (t) => Transaction(
             place: t['place'],
-            logo: t['logoPath'] != null ? File(t['logoPath']) : null,
             date: DateTime.parse(t['date']),
             amount: t['amount'],
           ),
@@ -68,85 +51,63 @@ class _TransactionsPageState extends State<TransactionsPage> {
     });
   }
 
-//determining the controller that would take the values
-//to use to manipulate for place, amount, logo etc...
-
   final _formKey = GlobalKey<FormState>();
   final _placeController = TextEditingController();
   final _amountController = TextEditingController();
-  File? _selectedLogo;
-
-//calculating the total amount of all transactions
 
   double get totalTransactionsAmount =>
       _transactions.fold(0, (sum, item) => sum + item.amount);
 
-//generating the picking up of a logo to add to a transaction
-
-  Future<void> _pickLogo() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      setState(() {
-        _selectedLogo = File(picked.path);
-      });
-    }
-  }
-
-//function to add a transaction to the page
+  // Mapping of brands to internet logos
+  final Map<String, String> brandLogos = {
+    'Apple':
+        'https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg',
+    'Google':
+        'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg',
+    'Zara': 'https://logos-world.net/wp-content/uploads/2020/05/Zara-Logo.png',
+    'H&M': 'https://upload.wikimedia.org/wikipedia/commons/5/53/H%26M-Logo.svg',
+    'Shein': 'https://1000logos.net/wp-content/uploads/2021/05/Shein-logo.png',
+  };
 
   void _addTransaction() async {
     if (_formKey.currentState!.validate()) {
-      //inserting into transactions var , the transactions values
-      //that come from the text editting controllers
-      //parsing the amount from double to string
-
       final newTransaction = Transaction(
         place: _placeController.text,
-        logo: _selectedLogo,
         date: DateTime.now(),
         amount: double.parse(_amountController.text),
       );
-
-      //save in DB
 
       await dbManager.insertTransaction(
         email: widget.email,
         place: newTransaction.place,
         amount: newTransaction.amount,
         date: newTransaction.date,
-        logoPath: newTransaction.logo?.path,
+        logoPath: null, // On ne sauvegarde plus de logo local
       );
 
       setState(() {
         _transactions.insert(0, newTransaction);
-
-        //clearing the controllers after registering the data
-        //into the transaction instance
-
         _placeController.clear();
         _amountController.clear();
-        _selectedLogo = null;
       });
-
-      //getting rid of the context = alerdialog
 
       Navigator.pop(context);
     }
   }
-
-//creating the showdialog that adds a transaction
 
   void _openAddTransactionDialog() {
     showDialog(
         context: context,
         builder: (ctx) {
           return AlertDialog(
+            backgroundColor: const Color(0xff181a1e),
             title: const Text(
+              textAlign: TextAlign.center,
               'Add Transaction',
               style: TextStyle(
-                color: Color(
-                  0xff050c20,
-                ),
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
             ),
             content: Form(
@@ -155,63 +116,54 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextFormField(
+                    MyTextFormField(
+                      leadingIcon: const Icon(CupertinoIcons.placemark),
                       controller: _placeController,
-                      decoration: InputDecoration(labelText: "Place"),
+                      hintText: 'Place',
+                      obscureText: false,
                       validator: (value) =>
                           value!.isEmpty ? "Enter a place" : null,
                     ),
-                    TextFormField(
+                    const SizedBox(height: 10),
+                    MyTextFormField(
+                      leadingIcon: const Icon(CupertinoIcons.money_dollar),
                       controller: _amountController,
-                      decoration: InputDecoration(labelText: "Amount"),
+                      hintText: "Amount",
+                      obscureText: false,
                       keyboardType:
-                          TextInputType.numberWithOptions(decimal: true),
+                          const TextInputType.numberWithOptions(decimal: true),
                       validator: (value) =>
                           value!.isEmpty ? "Enter amount" : null,
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    Row(
-                      children: [
-                        TextButton.icon(
-                          icon: Icon(
-                            CupertinoIcons.photo,
-                            color: Color(0xff050c20),
-                          ),
-                          onPressed: _pickLogo,
-                          label: Text(
-                            "Pick a logo",
-                            style: TextStyle(
-                              color: Color(0xff050c20),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        _selectedLogo != null
-                            ? Image.file(
-                                _selectedLogo!,
-                                height: 40,
-                                width: 40,
-                                fit: BoxFit.cover,
-                              )
-                            : Text('No logo selected'),
-                      ],
                     ),
                   ],
                 ),
               ),
             ),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: _addTransaction,
-                child: Text("Add"),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _addTransaction,
+                    child: const Text(
+                      "Add",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           );
@@ -223,11 +175,9 @@ class _TransactionsPageState extends State<TransactionsPage> {
     return Scaffold(
       backgroundColor: const Color(0xff181a1e),
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'T R A N S A C T I O N S',
-          style: TextStyle(
-            color: Colors.white,
-          ),
+          style: TextStyle(color: Colors.white),
         ),
         automaticallyImplyLeading: false,
         backgroundColor: const Color(0xff181a1e),
@@ -236,7 +186,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
         children: [
           Expanded(
             child: _transactions.isEmpty
-                ? Center(
+                ? const Center(
                     child: Text(
                       "No transactions yet",
                       style: TextStyle(color: Colors.white70),
@@ -247,36 +197,38 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     itemBuilder: (ctx, index) {
                       final transacIndex = _transactions[index];
                       return ListTile(
-                        leading: transacIndex.logo != null
+                        leading: brandLogos.containsKey(transacIndex.place)
                             ? CircleAvatar(
-                                backgroundImage: FileImage(
-                                  transacIndex.logo!,
-                                ),
+                                backgroundImage: NetworkImage(
+                                    brandLogos[transacIndex.place]!),
                               )
-                            : CircleAvatar(
-                                child: Icon(CupertinoIcons.shopping_cart),
+                            : const CircleAvatar(
+                                child: Icon(
+                                  CupertinoIcons.shopping_cart,
+                                  color: Colors.white,
+                                ),
                               ),
                         title: Text(
                           transacIndex.place,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         subtitle: Text(
                           "${transacIndex.date.day}/${transacIndex.date.month}/${transacIndex.date.year}",
-                          style: TextStyle(color: Colors.white54),
+                          style: const TextStyle(color: Colors.white54),
                         ),
                         trailing: Text(
                           '\$${transacIndex.amount.toStringAsFixed(2)}',
-                          style: TextStyle(color: Colors.white54),
+                          style: const TextStyle(color: Colors.white54),
                         ),
                       );
                     },
                   ),
           ),
           Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               border: Border(
                 top: BorderSide(
                   width: .5,
@@ -284,7 +236,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 ),
               ),
             ),
-            padding: EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -298,7 +250,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 ),
                 Text(
                   '\$${totalTransactionsAmount.toStringAsFixed(2)}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.white70,
@@ -307,14 +259,12 @@ class _TransactionsPageState extends State<TransactionsPage> {
               ],
             ),
           ),
-          SizedBox(
-            height: 80,
-          ),
+          const SizedBox(height: 80),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.green,
-        onPressed: () => _openAddTransactionDialog(),
+        onPressed: _openAddTransactionDialog,
         child: const Icon(
           CupertinoIcons.add,
           color: Colors.white,

@@ -6,8 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:expenses_tracker/pages/profile.dart';
 
 class MyNavBar extends StatelessWidget {
-  MyNavBar({Key? key, required this.currentIndex, required this.email})
-      : super(key: key);
+  const MyNavBar({super.key, required this.currentIndex, required this.email});
 
   final int currentIndex;
   final String email;
@@ -73,6 +72,7 @@ class MyNavBar extends StatelessWidget {
                     // ✅ Recharge la Default Card et les infos utilisateur
                     // quand on revient sur le Dashboard
                     Navigator.pushReplacement(
+                      // ignore: use_build_context_synchronously
                       context,
                       MaterialPageRoute(
                         builder: (context) => Dashboard(
@@ -106,12 +106,12 @@ class MyNavBar extends StatelessWidget {
 
 class IconBottomBar extends StatelessWidget {
   const IconBottomBar({
-    Key? key,
+    super.key,
     required this.text,
     required this.icon,
     required this.selected,
     required this.onPressed,
-  }) : super(key: key);
+  });
 
   final String text;
   final IconData icon;

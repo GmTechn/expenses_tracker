@@ -182,7 +182,7 @@ class _LoginPageState extends State<LoginPage> {
                           ],
                         ),
                         const SizedBox(height: 40),
-                        Mytextfield(
+                        MyTextFormField(
                           controller: emailController,
                           hintText: 'Email',
                           obscureText: false,
@@ -190,7 +190,7 @@ class _LoginPageState extends State<LoginPage> {
                               color: Colors.white24),
                         ),
                         const SizedBox(height: 20),
-                        Mytextfield(
+                        MyTextFormField(
                           controller: passwordController,
                           hintText: 'Password',
                           obscureText: !_isPasswordVisible,

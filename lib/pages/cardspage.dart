@@ -74,14 +74,14 @@ class _MyCardsPageState extends State<MyCardsPage> {
             content: SingleChildScrollView(
               child: Column(
                 children: [
-                  Mytextfield(
+                  MyTextFormField(
                     controller: amountController,
                     hintText: 'Amount',
                     obscureText: false,
                     leadingIcon: Icon(CupertinoIcons.money_dollar),
                   ),
                   SizedBox(height: 10),
-                  Mytextfield(
+                  MyTextFormField(
                     controller: cardNumberController,
                     hintText: 'Card Number',
                     obscureText: false,
@@ -89,14 +89,14 @@ class _MyCardsPageState extends State<MyCardsPage> {
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
                   SizedBox(height: 10),
-                  Mytextfield(
+                  MyTextFormField(
                     controller: expiryController,
                     hintText: 'Expiry date',
                     obscureText: false,
                     leadingIcon: Icon(CupertinoIcons.calendar),
                   ),
                   SizedBox(height: 10),
-                  Mytextfield(
+                  MyTextFormField(
                     controller: usernameController,
                     hintText: 'Username',
                     obscureText: false,

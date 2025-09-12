@@ -193,7 +193,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                 color: Colors.white,
                                 fontWeight: FontWeight.w500)),
                         const SizedBox(height: 40),
-                        Mytextfield(
+                        MyTextFormField(
                             controller: emailController,
                             hintText: 'Email',
                             obscureText: false,
@@ -201,7 +201,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               CupertinoIcons.envelope_fill,
                             )),
                         const SizedBox(height: 20),
-                        Mytextfield(
+                        MyTextFormField(
                           controller: passwordController,
                           hintText: 'Password',
                           obscureText: !_isPasswordVisible,
@@ -219,7 +219,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        Mytextfield(
+                        MyTextFormField(
                           controller: confirmPasswordController,
                           hintText: 'Confirm Password',
                           obscureText: !_isPasswordVisible,

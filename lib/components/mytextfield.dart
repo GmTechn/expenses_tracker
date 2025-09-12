@@ -1,60 +1,72 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class Mytextfield extends StatelessWidget {
-  const Mytextfield({
+class MyTextFormField extends StatelessWidget {
+  const MyTextFormField({
     super.key,
     required this.controller,
     required this.hintText,
     required this.obscureText,
-    required this.leadingIcon,
+    this.leadingIcon,
     this.trailingIcon,
     this.keyboardType,
     this.inputFormatters,
+    this.textInputAction,
+    this.validator,
+    this.onFieldSubmitted,
   });
 
   final TextEditingController controller;
   final String hintText;
   final bool obscureText;
-  final Widget leadingIcon;
+  final Widget? leadingIcon;
   final Widget? trailingIcon;
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
+  final TextInputAction? textInputAction;
+  final String? Function(String?)? validator;
+  final void Function(String)? onFieldSubmitted;
 
   @override
   Widget build(BuildContext context) {
-    final whiteColor = Colors.white24;
+    const whiteColor = Colors.white;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25),
-      child: TextField(
-        style: TextStyle(
-          color: Colors.white,
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
+      textInputAction: textInputAction,
+      validator: validator,
+      onFieldSubmitted: onFieldSubmitted,
+      style: const TextStyle(color: whiteColor),
+      cursorColor: whiteColor,
+      decoration: InputDecoration(
+        fillColor: const Color.fromARGB(255, 40, 43, 50),
+        filled: true,
+        prefixIcon: leadingIcon,
+        prefixIconColor: whiteColor,
+        suffixIcon: trailingIcon,
+        suffixIconColor: whiteColor,
+        hintText: hintText,
+        hintStyle: const TextStyle(color: Colors.white54),
+        enabledBorder: OutlineInputBorder(
+          borderSide: const BorderSide(
+            color: Color.fromARGB(255, 40, 43, 50),
+          ),
+          borderRadius: BorderRadius.circular(12),
         ),
-        controller: controller,
-        obscureText: obscureText,
-        keyboardType: keyboardType,
-        inputFormatters: inputFormatters,
-        cursorColor: whiteColor,
-        decoration: InputDecoration(
-          fillColor: Color.fromARGB(255, 40, 43, 50),
-          filled: true,
-          prefixIcon: leadingIcon,
-          prefixIconColor: whiteColor,
-          suffixIcon: trailingIcon,
-          suffixIconColor: whiteColor,
-          hintText: hintText,
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Color.fromARGB(255, 40, 43, 50),
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: whiteColor,
-            ),
-          ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: whiteColor),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: Colors.red),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: Colors.red),
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
     );

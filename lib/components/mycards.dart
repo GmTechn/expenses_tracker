@@ -1,8 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class MyCards extends StatelessWidget {
-  MyCards({
+  const MyCards({
     super.key,
     required this.amount,
     required this.cardnumber,

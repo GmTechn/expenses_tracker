@@ -103,25 +103,25 @@ class _ListOfUsersState extends State<ListOfUsers> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Mytextfield(
+                  MyTextFormField(
                       controller: newFname,
                       hintText: 'First Name',
                       obscureText: false,
                       leadingIcon: const Icon(CupertinoIcons.person_fill)),
                   const SizedBox(height: 10),
-                  Mytextfield(
+                  MyTextFormField(
                       controller: newLname,
                       hintText: 'Last Name',
                       obscureText: false,
                       leadingIcon: const Icon(CupertinoIcons.person_fill)),
                   const SizedBox(height: 10),
-                  Mytextfield(
+                  MyTextFormField(
                       controller: newEmail,
                       hintText: 'Email',
                       obscureText: false,
                       leadingIcon: const Icon(CupertinoIcons.mail_solid)),
                   const SizedBox(height: 10),
-                  Mytextfield(
+                  MyTextFormField(
                     controller: newPassword,
                     hintText: 'Password',
                     obscureText: !isPasswordVisible,
@@ -142,7 +142,7 @@ class _ListOfUsersState extends State<ListOfUsers> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Mytextfield(
+                  MyTextFormField(
                       controller: newPhone,
                       hintText: 'Phone Number',
                       obscureText: false,
