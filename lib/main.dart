@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      initialRoute: '/signup',
+      initialRoute: '/',
       routes: {
         '/': (context) => const LoginPage(),
         // You can handle navigation with email using onGenerateRoute

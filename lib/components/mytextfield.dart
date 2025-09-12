@@ -23,27 +23,37 @@ class Mytextfield extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final whiteColor = Colors.white24;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25),
       child: TextField(
-        style: TextStyle(color: Color(0xff050c20)),
+        style: TextStyle(
+          color: Colors.white,
+        ),
         controller: controller,
         obscureText: obscureText,
         keyboardType: keyboardType,
         inputFormatters: inputFormatters,
-        cursorColor: const Color(0xff050c20),
+        cursorColor: whiteColor,
         decoration: InputDecoration(
+          fillColor: Color.fromARGB(255, 40, 43, 50),
+          filled: true,
           prefixIcon: leadingIcon,
+          prefixIconColor: whiteColor,
           suffixIcon: trailingIcon,
+          suffixIconColor: whiteColor,
           hintText: hintText,
           enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(
-              color: const Color(0xff050c20).withOpacity(.5),
+              color: Color.fromARGB(255, 40, 43, 50),
             ),
             borderRadius: BorderRadius.circular(12),
           ),
-          focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Color(0xff050c20)),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: whiteColor,
+            ),
           ),
         ),
       ),

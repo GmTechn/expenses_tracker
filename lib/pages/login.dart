@@ -18,12 +18,22 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  //controllers
+
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+
+  //bolean for password visibility
   bool _isPasswordVisible = false;
+
+  //signing in with google
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  //initializing database instance
+
   final DatabaseManager _dbManager = DatabaseManager();
 
+//signin with google function
   Future<void> signInWithGoogle() async {
     try {
       final account = await _googleSignIn.signIn();
@@ -38,6 +48,8 @@ class _LoginPageState extends State<LoginPage> {
       );
     }
   }
+
+  //signing in with apple
 
   Future<void> _handleAppleSignIn() async {
     try {
@@ -55,6 +67,8 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+//showing error messages
+
   void showErrorMessage(String message) {
     showDialog(
       context: context,
@@ -67,6 +81,9 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
+
+//login funcion to use email and password
+//with local database
 
   Future<void> loginUser() async {
     final email = emailController.text.trim();
@@ -102,33 +119,37 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  //UI design and functions calling
+
   @override
   Widget build(BuildContext context) {
+    Color whiteColor = Colors.white;
+
     return Scaffold(
+      backgroundColor: const Color(0xff181a1e),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(height: 20),
           const Icon(
             CupertinoIcons.chart_bar_circle_fill,
-            color: Color(0xff050c20),
+            color: Colors.green,
             size: 60,
           ),
           const SizedBox(height: 20),
           Text(
             'B U D G E T  B U D D Y',
             style: GoogleFonts.abel(
-              fontWeight: FontWeight.bold,
-              fontSize: 40,
-            ),
+                fontWeight: FontWeight.bold, fontSize: 30, color: whiteColor),
           ),
-          const SizedBox(height: 10),
-          const Row(
+          const SizedBox(height: 20),
+          Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 'Welcome back',
-                style: TextStyle(color: Color(0xff050c20)),
+                style: TextStyle(
+                  color: whiteColor,
+                ),
               ),
             ],
           ),
@@ -137,15 +158,18 @@ class _LoginPageState extends State<LoginPage> {
             controller: emailController,
             hintText: 'Email',
             obscureText: false,
-            leadingIcon: const Icon(Icons.email, color: Color(0xff050c20)),
+            leadingIcon:
+                Icon(CupertinoIcons.envelope_fill, color: Colors.white24),
           ),
           const SizedBox(height: 20),
           Mytextfield(
             controller: passwordController,
             hintText: 'Password',
             obscureText: !_isPasswordVisible,
-            leadingIcon:
-                const Icon(Icons.lock_outlined, color: Color(0xff050c20)),
+            leadingIcon: const Icon(
+              CupertinoIcons.lock_fill,
+              color: Colors.white24,
+            ),
           ),
           const SizedBox(height: 20),
           Row(
@@ -158,8 +182,10 @@ class _LoginPageState extends State<LoginPage> {
                   });
                 },
                 icon: Icon(
-                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                  color: const Color(0xff050c20),
+                  _isPasswordVisible
+                      ? CupertinoIcons.eye_fill
+                      : CupertinoIcons.eye_slash_fill,
+                  color: whiteColor,
                 ),
               ),
               GestureDetector(
@@ -170,10 +196,10 @@ class _LoginPageState extends State<LoginPage> {
                         builder: (context) => const ForgotPasswordPage()),
                   );
                 },
-                child: const Text(
+                child: Text(
                   'Forgot Password?',
                   style: TextStyle(
-                    color: Color(0xff050c20),
+                    color: whiteColor,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -188,19 +214,16 @@ class _LoginPageState extends State<LoginPage> {
             buttonWidth: 200,
           ),
           const SizedBox(height: 40),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 25.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Expanded(
-                    child: Divider(thickness: .5, color: Color(0xff050c20))),
+                Expanded(child: Divider(thickness: .5, color: whiteColor)),
                 SizedBox(width: 10),
-                Text('Or continue with',
-                    style: TextStyle(color: Color(0xff050c20))),
+                Text('Or continue with', style: TextStyle(color: whiteColor)),
                 SizedBox(width: 10),
-                Expanded(
-                    child: Divider(thickness: .5, color: Color(0xff050c20))),
+                Expanded(child: Divider(thickness: .5, color: whiteColor)),
               ],
             ),
           ),
@@ -216,12 +239,12 @@ class _LoginPageState extends State<LoginPage> {
                   onTap: _handleAppleSignIn),
             ],
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 50),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text("Don't have an account?",
-                  style: TextStyle(color: Color(0xff050c20))),
+              Text("Don't have an account?",
+                  style: TextStyle(color: whiteColor)),
               GestureDetector(
                 onTap: () => Navigator.push(
                   context,
@@ -230,7 +253,7 @@ class _LoginPageState extends State<LoginPage> {
                 child: const Text(
                   ' Sign up',
                   style: TextStyle(
-                      color: Color(0xff050c20), fontWeight: FontWeight.bold),
+                      color: Colors.blue, fontWeight: FontWeight.bold),
                 ),
               ),
             ],

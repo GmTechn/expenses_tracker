@@ -21,14 +21,17 @@ class MyButton extends StatelessWidget {
         height: buttonHeight,
         width: buttonWidth,
         decoration: BoxDecoration(
-          color: const Color(0xff050c20),
+          color: Colors.green,
           borderRadius: BorderRadius.circular(12),
         ),
         child: TextButton(
             onPressed: onTap,
             child: Text(
               textbutton,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             )),
       ),
     );

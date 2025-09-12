@@ -15,10 +15,10 @@ class MySquareTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-          height: 100,
-          width: 100,
+          height: 80,
+          width: 80,
           decoration: BoxDecoration(
-            color: Colors.white54,
+            color: Colors.white24,
             border: Border.all(color: const Color(0xff050c20)),
             borderRadius: BorderRadius.circular(12),
           ),
