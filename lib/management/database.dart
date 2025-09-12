@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:expenses_tracker/models/cards.dart';
+import 'package:expenses_tracker/models/transactions.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:expenses_tracker/models/users.dart';
@@ -123,34 +124,36 @@ class DatabaseManager {
   }
 
   // --------- TRANSACTIONS ---------- //
-  Future<void> insertTransaction({
-    required String email,
-    required String place,
-    required double amount,
-    required DateTime date,
-    String? logoPath,
-  }) async {
+  // ----------------- TRANSACTIONS ----------------- //
+
+  Future<int> insertTransaction(TransactionModel transaction) async {
     final db = await database;
-    await db.insert(
+    return await db.insert(
       'transactions',
-      {
-        'email': email,
-        'place': place,
-        'amount': amount,
-        'date': date.toIso8601String(),
-        'logoPath': logoPath,
-      },
+      transaction.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
-  Future<List<Map<String, dynamic>>> getTransactions(String email) async {
+  Future<List<TransactionModel>> getTransactions(String email) async {
     final db = await database;
-    return await db.query(
+    final result = await db.query(
       'transactions',
       where: 'email = ?',
       whereArgs: [email],
       orderBy: 'date DESC',
+    );
+    return result.map((map) => TransactionModel.fromMap(map)).toList();
+  }
+
+  Future<int> updateTransaction(TransactionModel transaction) async {
+    final db = await database;
+    return await db.update(
+      'transactions',
+      transaction.toMap(),
+      where: 'id = ?',
+      whereArgs: [transaction.id],
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
