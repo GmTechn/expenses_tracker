@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -14,11 +15,16 @@ class MyTextFormField extends StatelessWidget {
     this.textInputAction,
     this.validator,
     this.onFieldSubmitted,
+    this.readOnly = false,
+    this.onTap,
   });
 
   final TextEditingController controller;
   final String hintText;
   final bool obscureText;
+  final bool readOnly;
+  final VoidCallback? onTap;
+
   final Widget? leadingIcon;
   final Widget? trailingIcon;
   final TextInputType? keyboardType;
@@ -39,6 +45,8 @@ class MyTextFormField extends StatelessWidget {
       textInputAction: textInputAction,
       validator: validator,
       onFieldSubmitted: onFieldSubmitted,
+      readOnly: readOnly,
+      onTap: onTap,
       style: const TextStyle(color: whiteColor),
       cursorColor: whiteColor,
       decoration: InputDecoration(
