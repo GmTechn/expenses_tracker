@@ -1,0 +1,362 @@
+import 'dart:io';
+
+import 'package:expenses_tracker/components/mybutton.dart';
+import 'package:expenses_tracker/components/mycards.dart';
+import 'package:expenses_tracker/components/mynavbar.dart';
+import 'package:expenses_tracker/components/mytransaction.dart';
+import 'package:expenses_tracker/management/database.dart';
+import 'package:expenses_tracker/models/cards.dart';
+import 'package:expenses_tracker/models/transactions.dart';
+import 'package:expenses_tracker/models/users.dart';
+import 'package:expenses_tracker/pages/cardspage.dart';
+import 'package:expenses_tracker/pages/profile.dart';
+import 'package:expenses_tracker/services/listofusers.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class Dashboard extends StatefulWidget {
+  final String email;
+
+  const Dashboard({super.key, required this.email});
+
+  @override
+  State<Dashboard> createState() => _DashboardState();
+}
+
+class _DashboardState extends State<Dashboard> {
+  final DatabaseManager _databaseManager = DatabaseManager();
+
+  AppUser? _currentUser;
+  CardModel? _defaultCard;
+  List<TransactionModel> _recentTransactions = [];
+
+  String? _savedPhotoPath;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUsers();
+    _loadDefaultCard();
+    _loadSavedPhoto();
+    _loadTransactions();
+  }
+
+  Future<void> _loadSavedPhoto() async {
+    final prefs = await SharedPreferences.getInstance();
+    final path = prefs.getString('profile_photo_${widget.email}');
+    if (path != null && path.isNotEmpty) {
+      setState(() {
+        _savedPhotoPath = path;
+      });
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadUsers();
+    _loadDefaultCard();
+    _loadTransactions();
+  }
+
+  Future<void> _loadUsers() async {
+    await _databaseManager.initialisation();
+    final user = await _databaseManager.getUserByEmail(widget.email);
+    setState(() {
+      _currentUser = user;
+    });
+  }
+
+  Future<void> _loadDefaultCard() async {
+    final card = await _databaseManager.getDefaultCard(widget.email);
+    setState(() {
+      _defaultCard = card;
+    });
+  }
+
+  Future<void> _loadTransactions() async {
+    final transactions = await _databaseManager.getTransactions(widget.email);
+    transactions
+        .sort((a, b) => b.date.compareTo(a.date)); // Trier par date descendante
+    setState(() {
+      _recentTransactions =
+          transactions.take(4).toList(); // 4 dernières transactions
+    });
+  }
+
+//total transactions
+
+  double get totalTransactionsAmount =>
+      _recentTransactions.fold(0, (sum, item) => sum + item.amount);
+// Calcule la somme des revenus (Income)
+  double get totalIncome => _recentTransactions
+      .where((t) => t.amount >= 0)
+      .fold(0, (sum, t) => sum + t.amount);
+
+// Calcule la somme des dépenses (Expense)
+  double get totalExpense => _recentTransactions
+      .where((t) => t.amount < 0)
+      .fold(0, (sum, t) => sum + t.amount.abs());
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xff181a1e),
+      appBar: AppBar(
+        backgroundColor: const Color(0xff181a1e),
+        automaticallyImplyLeading: false,
+        title: const Text(
+          'D A S H B O A R D',
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Container : Profile button
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: const Color.fromARGB(255, 35, 37, 46),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    const SizedBox(width: 40),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ProfilePage(email: widget.email),
+                          ),
+                        ).then((_) => _loadUsers());
+                      },
+                      child: CircleAvatar(
+                        radius: 26,
+                        backgroundColor: Colors.white,
+                        backgroundImage:
+                            (_currentUser?.photoPath ?? '').isNotEmpty &&
+                                    File(_currentUser!.photoPath!).existsSync()
+                                ? FileImage(File(_currentUser!.photoPath!))
+                                : (_savedPhotoPath != null &&
+                                        File(_savedPhotoPath!).existsSync())
+                                    ? FileImage(File(_savedPhotoPath!))
+                                    : null,
+                        child: (_currentUser?.photoPath ?? '').isEmpty &&
+                                (_savedPhotoPath == null ||
+                                    _savedPhotoPath!.isEmpty)
+                            ? const Icon(
+                                CupertinoIcons.person_fill,
+                                color: Color(0xff050c20),
+                              )
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Welcome back,',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white54),
+                          ),
+                          Text(
+                            _currentUser != null
+                                ? "${_currentUser!.fname} ${_currentUser!.lname}"
+                                : "Guest",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Stack(
+                      children: [
+                        IconButton(
+                          onPressed: () {},
+                          icon: const Icon(CupertinoIcons.bell_fill,
+                              size: 28, color: Colors.white),
+                        ),
+                        Positioned(
+                          right: 10,
+                          top: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Text(
+                              '7',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10),
+                            ),
+                          ),
+                        )
+                      ],
+                    )
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Card
+              if (_defaultCard != null)
+                MyCards(
+                  amount: _defaultCard!.amount,
+                  cardnumber: _defaultCard!.cardnumber,
+                  expirydate: _defaultCard!.expirydate,
+                  colorOne: Color(_defaultCard!.colorOne),
+                  colorTwo: Color(_defaultCard!.colorTwo),
+                  username: _defaultCard!.username,
+                )
+              else
+                Column(
+                  children: [
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                MyCardsPage(email: widget.email),
+                          ),
+                        );
+                      },
+                      label: const Text(
+                        'Set up default card',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      icon: const Icon(
+                        CupertinoIcons.creditcard_fill,
+                        color: Colors.white,
+                      ),
+                    ),
+                    MyCards(
+                      amount: '0.00\$',
+                      cardnumber: '0000 0000 0000 0000',
+                      expirydate: 'mm/yy',
+                      username: 'no username',
+                      colorOne: Colors.blue,
+                      colorTwo: Colors.amber,
+                    ),
+                  ],
+                ),
+
+              const SizedBox(height: 20),
+
+              // Income & Expenses
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Column(
+                    children: [
+                      FloatingActionButton(
+                        onPressed: () {},
+                        heroTag: "income",
+                        backgroundColor: Colors.green,
+                        child: const Icon(
+                          CupertinoIcons.arrow_down_circle_fill,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '+\$${totalIncome.toStringAsFixed(2)} Income',
+                        style: const TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      FloatingActionButton(
+                        onPressed: () {},
+                        heroTag: "expense",
+                        backgroundColor: Colors.red,
+                        child: const Icon(
+                          CupertinoIcons.arrow_up_circle_fill,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '-\$${totalExpense.toStringAsFixed(2)} Expense',
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              const Text(
+                'Recent Transactions',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 18),
+              ),
+              const SizedBox(height: 10),
+
+              Column(
+                children: _recentTransactions.map((t) {
+                  return Mytransaction(
+                    logo: t.logoPath ??
+                        'assets/images/apple.png', // mettre une image par défaut
+                    title: t.place ?? "",
+                    date: "${t.date.day}/${t.date.month}/${t.date.year}",
+                    amount: t.amount,
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 20),
+
+              MyButton(
+                textbutton: 'Users',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ListOfUsers()),
+                  ).then((_) {
+                    _loadUsers();
+                  });
+                },
+                buttonHeight: 40,
+                buttonWidth: 80,
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: MyNavBar(
+        currentIndex: 0,
+        email: widget.email,
+      ),
+    );
+  }
+}
