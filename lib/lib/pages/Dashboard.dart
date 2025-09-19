@@ -15,11 +15,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
-import 'package:expenses_tracker/management/balance_provider.dart';
 
 class Dashboard extends StatefulWidget {
   final String email;
-
   const Dashboard({super.key, required this.email});
 
   @override
@@ -36,67 +34,58 @@ class _DashboardState extends State<Dashboard> {
   @override
   void initState() {
     super.initState();
-    _loadUsers();
-    _loadDefaultCard();
     _loadSavedPhoto();
-    _loadTransactions();
+    _loadAllData();
   }
 
   Future<void> _loadSavedPhoto() async {
     final prefs = await SharedPreferences.getInstance();
     final path = prefs.getString('profile_photo_${widget.email}');
     if (path != null && path.isNotEmpty) {
-      setState(() {
-        _savedPhotoPath = path;
-      });
+      setState(() => _savedPhotoPath = path);
     }
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _loadUsers();
-    _loadDefaultCard();
-    _loadTransactions();
-  }
-
-  Future<void> _loadUsers() async {
+  Future<void> _loadAllData() async {
     await _databaseManager.initialisation();
+
+    // Load user
     final user = await _databaseManager.getUserByEmail(widget.email);
-    setState(() {
-      _currentUser = user;
-    });
-  }
+    if (mounted) setState(() => _currentUser = user);
 
-  Future<void> _loadDefaultCard() async {
-    final card = await _databaseManager.getDefaultCard(widget.email);
-    if (card != null) {
-      setState(() => _defaultCard = card);
+    // Load cards
+    final cards = await _databaseManager.getCards(widget.email);
+    final provider = context.read<BalanceProvider>();
+    provider.setCards(cards);
 
-      final provider = context.read<BalanceProvider>();
-      provider.setDefaultCard(card.id!);
+    // Load default card
+    final defaultCard = await _databaseManager.getDefaultCard(widget.email);
+    if (defaultCard != null) {
+      _defaultCard = defaultCard;
+      provider.setDefaultCard(defaultCard.id!);
 
-      final cards = await _databaseManager.getCards(widget.email);
-      provider.setCards(cards);
-
-      final transactions =
-          await _databaseManager.getTransactionsByCard(widget.email, card.id!);
-      provider.setTransactionsForCard(card.id!, transactions);
-    }
-  }
-
-  Future<void> _loadTransactions() async {
-    if (_defaultCard != null) {
+      // Load transactions for default card
       final transactions = await _databaseManager.getTransactionsByCard(
-          widget.email, _defaultCard!.id!);
-      transactions.sort((a, b) => b.date.compareTo(a.date));
-      setState(() {
-        _recentTransactions = transactions.take(5).toList();
-      });
+          widget.email, defaultCard.id!);
+      provider.setTransactionsForCard(defaultCard.id!, transactions);
 
-      context
-          .read<BalanceProvider>()
-          .setTransactionsForCard(_defaultCard!.id! as int, transactions);
+      // Keep recent transactions for UI
+      if (mounted) {
+        setState(() {
+          _recentTransactions = transactions.toList()
+            ..sort((a, b) => b.date.compareTo(a.date));
+          _recentTransactions = _recentTransactions.take(5).toList();
+        });
+      }
+    }
+
+    // Load all transactions for all cards into provider
+    for (final card in cards) {
+      if (card.id != _defaultCard?.id) {
+        final txs = await _databaseManager.getTransactionsByCard(
+            widget.email, card.id!);
+        provider.setTransactionsForCard(card.id!, txs);
+      }
     }
   }
 
@@ -126,6 +115,7 @@ class _DashboardState extends State<Dashboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // User info
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -142,7 +132,7 @@ class _DashboardState extends State<Dashboard> {
                           context,
                           MaterialPageRoute(
                               builder: (_) => ProfilePage(email: widget.email)),
-                        ).then((_) => _loadUsers());
+                        ).then((_) => _loadAllData());
                       },
                       child: CircleAvatar(
                         radius: 26,
@@ -210,15 +200,23 @@ class _DashboardState extends State<Dashboard> {
                   ],
                 ),
               ),
+
               const SizedBox(height: 20),
+
+              // Default card
               if (_defaultCard != null)
-                MyCards(
-                  amount: "\$${currentBalance.toStringAsFixed(2)}",
-                  cardnumber: _defaultCard!.cardnumber,
-                  expirydate: _defaultCard!.expirydate,
-                  colorOne: Color(_defaultCard!.colorOne),
-                  colorTwo: Color(_defaultCard!.colorTwo),
-                  username: _defaultCard!.username,
+                Consumer<BalanceProvider>(
+                  builder: (context, provider, _) {
+                    return MyCards(
+                      amount:
+                          "\$${provider.totalBalance(_defaultCard!.id!).toStringAsFixed(2)}",
+                      cardnumber: _defaultCard!.cardnumber,
+                      expirydate: _defaultCard!.expirydate,
+                      colorOne: Color(_defaultCard!.colorOne),
+                      colorTwo: Color(_defaultCard!.colorTwo),
+                      username: _defaultCard!.username,
+                    );
+                  },
                 )
               else
                 Column(
@@ -246,7 +244,10 @@ class _DashboardState extends State<Dashboard> {
                         colorTwo: Colors.amber),
                   ],
                 ),
+
               const SizedBox(height: 20),
+
+              // Income & Expense
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -283,23 +284,37 @@ class _DashboardState extends State<Dashboard> {
                   ),
                 ],
               ),
+
               const SizedBox(height: 20),
+
+              // Recent Transactions
               const Text('Recent Transactions',
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                       fontSize: 18)),
               const SizedBox(height: 10),
-              Column(
-                children: _recentTransactions.map((t) {
-                  return Mytransaction(
-                      logo: t.logoPath ?? 'assets/images/apple.png',
-                      title: t.place ?? "",
-                      date: "${t.date.day}/${t.date.month}/${t.date.year}",
-                      amount: t.amount);
-                }).toList(),
+              Consumer<BalanceProvider>(
+                builder: (context, provider, _) {
+                  if (_defaultCard == null) return const SizedBox();
+                  final transactions =
+                      provider.transactionsForCard(_defaultCard!.id!);
+                  return Column(
+                    children: transactions.take(5).map((t) {
+                      return Mytransaction(
+                        logo: t.logoPath ?? 'assets/images/apple.png',
+                        title: t.place ?? "",
+                        date: "${t.date.day}/${t.date.month}/${t.date.year}",
+                        amount: t.amount,
+                      );
+                    }).toList(),
+                  );
+                },
               ),
+
               const SizedBox(height: 20),
+
+              // Users button
               MyButton(
                 textbutton: 'Users',
                 onTap: () {
@@ -307,7 +322,7 @@ class _DashboardState extends State<Dashboard> {
                       context,
                       MaterialPageRoute(
                           builder: (context) => const ListOfUsers())).then((_) {
-                    _loadUsers();
+                    _loadAllData();
                   });
                 },
                 buttonHeight: 40,

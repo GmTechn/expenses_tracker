@@ -6,6 +6,7 @@ import 'package:expenses_tracker/components/mytextfield.dart';
 import 'package:expenses_tracker/management/balance_provider.dart';
 import 'package:expenses_tracker/management/database.dart';
 import 'package:expenses_tracker/models/cards.dart';
+import 'package:expenses_tracker/models/transactions.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -34,21 +35,28 @@ class _MyCardsPageState extends State<MyCardsPage> {
     final cards = await _databaseManager.getCards(widget.email);
     setState(() => _userCards = cards);
 
-    // Update Provider
+    // Update provider
     final provider = context.read<BalanceProvider>();
     provider.setCards(cards);
 
-    final defaultCard = cards.firstWhere((c) => c.isDefault == 1,
-        orElse: () => cards.isNotEmpty ? cards[0] : cards[0]);
-    provider.setDefaultCard(defaultCard.id!); // ✅ int
+    // Set default card
+    if (cards.isNotEmpty) {
+      final defaultCard =
+          cards.firstWhere((c) => c.isDefault == 1, orElse: () => cards[0]);
+      provider.setDefaultCard(defaultCard.id!);
+
+      // Load transactions for each card
+      for (var card in cards) {
+        final transactions = await _databaseManager.getTransactionsByCard(
+            widget.email, card.id!);
+        provider.setTransactionsForCard(card.id!, transactions);
+      }
+    }
   }
 
   Future<void> _setDefaultCard(CardModel card) async {
     await _databaseManager.setDefaultCard(widget.email, card.id!);
     await _loadCards();
-
-    // Update provider default
-    context.read<BalanceProvider>().setDefaultCard(card.id!); // ✅ int
   }
 
   void _cardAddEditDialog({CardModel? card}) {
@@ -174,10 +182,13 @@ class _MyCardsPageState extends State<MyCardsPage> {
                           cardNumberController.text.isNotEmpty &&
                           expiryController.text.isNotEmpty &&
                           usernameController.text.isNotEmpty) {
+                        final provider = context.read<BalanceProvider>();
+
                         final newCard = CardModel(
                           id: card?.id,
                           email: widget.email,
-                          amount: "\$${amountController.text}",
+                          amount:
+                              "\$${amountController.text}", // Initial amount
                           cardnumber: cardNumberController.text,
                           expirydate: expiryController.text,
                           username: usernameController.text,
@@ -231,9 +242,8 @@ class _MyCardsPageState extends State<MyCardsPage> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       MyCards(
-                        amount: card.isDefault == 1
-                            ? "\$${provider.totalBalance(card.id!).toStringAsFixed(2)}" // ✅ totalBalance
-                            : card.amount,
+                        amount:
+                            "\$${provider.totalBalance(card.id!).toStringAsFixed(2)}",
                         cardnumber: card.cardnumber,
                         expirydate: card.expirydate,
                         username: card.username,

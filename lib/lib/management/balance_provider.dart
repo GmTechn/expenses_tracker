@@ -3,66 +3,71 @@ import '../models/cards.dart';
 import '../models/transactions.dart';
 
 class BalanceProvider extends ChangeNotifier {
-  int? _defaultCardId;
   List<CardModel> _cards = [];
-  Map<int, List<TransactionModel>> _cardTransactions = {};
+  Map<int, List<TransactionModel>> _transactionsPerCard = {}; // key = cardId
+  int? _defaultCardId;
 
-  // --- Getters ---
-  int? get defaultCardId => _defaultCardId;
+  // Set all user cards
+  void setCards(List<CardModel> cards) {
+    _cards = cards;
+    // initialize empty lists if not already
+    for (var card in cards) {
+      _transactionsPerCard.putIfAbsent(card.id!, () => []);
+    }
+    notifyListeners();
+  }
 
   List<CardModel> get cards => _cards;
 
-  double get currentBalance {
-    if (_defaultCardId == null) return 0.0;
-    final transactions = _cardTransactions[_defaultCardId!] ?? [];
-    return transactions.fold(0.0, (sum, t) => sum + t.amount);
-  }
-
-  // --- Setters / actions ---
   void setDefaultCard(int cardId) {
     _defaultCardId = cardId;
     notifyListeners();
   }
 
-  void setCards(List<CardModel> cards) {
-    _cards = cards;
+  int? get defaultCardId => _defaultCardId;
+
+  // Set transactions for a specific card
+  void setTransactionsForCard(int cardId, List<TransactionModel> txs) {
+    _transactionsPerCard[cardId] = txs;
     notifyListeners();
   }
 
-  void setTransactionsForCard(int cardId, List<TransactionModel> transactions) {
-    _cardTransactions[cardId] = transactions;
+  // Add a new transaction to a specific card
+  void addTransaction(int cardId, TransactionModel tx) {
+    _transactionsPerCard[cardId]?.add(tx);
     notifyListeners();
   }
 
-  void addTransaction(int cardId, TransactionModel transaction) {
-    _cardTransactions[cardId] ??= [];
-    _cardTransactions[cardId]!.add(transaction);
-    notifyListeners();
-  }
-
-  void updateTransaction(int cardId, TransactionModel transaction) {
-    final transactions = _cardTransactions[cardId];
-    if (transactions == null) return;
-    final index = transactions.indexWhere((t) => t.id == transaction.id);
-    if (index != -1) {
-      transactions[index] = transaction;
-      notifyListeners();
-    }
-  }
-
-  void removeTransaction(int cardId, TransactionModel transaction) {
-    final transactions = _cardTransactions[cardId];
-    if (transactions == null) return;
-    transactions.removeWhere((t) => t.id == transaction.id);
-    notifyListeners();
-  }
-
+  // Get transactions for a card
   List<TransactionModel> transactionsForCard(int cardId) {
-    return _cardTransactions[cardId] ?? [];
+    return _transactionsPerCard[cardId] ?? [];
   }
 
+  // Total balance for a specific card
   double totalBalance(int cardId) {
-    final transactions = _cardTransactions[cardId] ?? [];
-    return transactions.fold(0.0, (sum, t) => sum + t.amount);
+    final txs = _transactionsPerCard[cardId] ?? [];
+    return txs.fold(0.0, (sum, t) => sum + t.amount);
+  }
+
+  // Total income for a card
+  double totalIncome(int cardId) {
+    final txs = _transactionsPerCard[cardId] ?? [];
+    return txs
+        .where((t) => t.amount >= 0)
+        .fold(0.0, (sum, t) => sum + t.amount);
+  }
+
+  // Total expense for a card
+  double totalExpense(int cardId) {
+    final txs = _transactionsPerCard[cardId] ?? [];
+    return txs
+        .where((t) => t.amount < 0)
+        .fold(0.0, (sum, t) => sum + t.amount.abs());
+  }
+
+  // Current balance for default card
+  double get currentBalance {
+    if (_defaultCardId == null) return 0.0;
+    return totalBalance(_defaultCardId!);
   }
 }
