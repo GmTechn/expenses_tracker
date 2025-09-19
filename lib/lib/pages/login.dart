@@ -158,7 +158,7 @@ class _LoginPageState extends State<LoginPage> {
                       children: [
                         const Icon(
                           CupertinoIcons.chart_bar_circle_fill,
-                          color: Colors.green,
+                          color: Color.fromRGBO(76, 175, 80, 1),
                           size: 60,
                         ),
                         const SizedBox(height: 40),
