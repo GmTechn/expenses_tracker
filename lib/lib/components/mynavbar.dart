@@ -63,24 +63,26 @@ class MyNavBar extends StatelessWidget {
                 selected: currentIndex == 2,
                 onPressed: () {
                   Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => MyCardsPage(
-                              email: email,
-                            )),
-                  ).then((_) {
-                    // ✅ Recharge la Default Card et les infos utilisateur
-                    // quand on revient sur le Dashboard
-                    Navigator.pushReplacement(
-                      // ignore: use_build_context_synchronously
                       context,
                       MaterialPageRoute(
-                        builder: (context) => Dashboard(
-                          email: email,
-                        ),
-                      ),
-                    );
-                  });
+                          builder: (context) => MyCardsPage(
+                                email: email,
+                              ))
+                      // ).then(
+                      //   (_) {
+                      //     // ✅ Recharge la Default Card et les infos utilisateur
+                      //     // quand on revient sur le Dashboard
+                      //     Navigator.pushReplacement(
+                      //       // ignore: use_build_context_synchronously
+                      //       context,
+                      //       MaterialPageRoute(
+                      //         builder: (context) => Dashboard(
+                      //           email: email,
+                      //         ),
+                      //       ),
+                      //     );
+                      //   },
+                      );
                 },
               ),
               IconBottomBar(

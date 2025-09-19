@@ -229,8 +229,21 @@ class _ProfilePageState extends State<ProfilePage> {
         showDialog(
           context: context,
           builder: (_) => const AlertDialog(
-            title: Text('Success'),
-            content: Text('Your changes have been saved.'),
+            backgroundColor: const Color(
+              0xff181a1e,
+            ),
+            title: Text(
+              'Success',
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
+            content: Text(
+              'Your changes have been saved.',
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
           ),
         );
       }
@@ -248,8 +261,21 @@ class _ProfilePageState extends State<ProfilePage> {
     final doCancel = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Discard changes?'),
-        content: const Text('Are you sure you want to discard your edits?'),
+        backgroundColor: const Color(
+          0xff181a1e,
+        ),
+        title: const Text(
+          'Discard changes?',
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
+        content: const Text(
+          'Are you sure you want to discard your edits?',
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),

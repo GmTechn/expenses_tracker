@@ -5,6 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:expenses_tracker/pages/profile.dart';
 
+import '../pages/transactions.dart';
+
 class MyNavBar extends StatelessWidget {
   const MyNavBar({super.key, required this.currentIndex, required this.email});
 

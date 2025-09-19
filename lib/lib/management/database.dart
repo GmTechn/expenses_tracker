@@ -19,7 +19,7 @@ class DatabaseManager {
   Future<void> initialisation() async {
     _database = await openDatabase(
       join(await getDatabasesPath(), 'users_database.db'),
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         // --- Users ---
         await db.execute(
@@ -64,9 +64,10 @@ class DatabaseManager {
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
-          // Ajoute la colonne manquante
           await db.execute(
               'ALTER TABLE cards ADD COLUMN isDefault INTEGER DEFAULT 0');
+          await db.execute(
+              'ALTER TABLE transactions ADD COLUMN cardId INTEGER'); // ✅ ajouté
         }
       },
     );
@@ -162,6 +163,19 @@ class DatabaseManager {
     await db.delete('transactions', where: 'id = ?', whereArgs: [id]);
   }
 
+  // Retourne les transactions d'une carte spécifique
+  Future<List<TransactionModel>> getTransactionsByCard(
+      String email, int cardId) async {
+    final db = await database;
+    final result = await db.query(
+      'transactions',
+      where: 'email = ? AND cardId = ?',
+      whereArgs: [email, cardId],
+      orderBy: 'date DESC',
+    );
+    return result.map((map) => TransactionModel.fromMap(map)).toList();
+  }
+
   // --------- CARDS ---------- //
 
   // Retourne la carte par défaut
@@ -219,5 +233,19 @@ class DatabaseManager {
     // Définir la nouvelle carte par défaut
     await db.update('cards', {'isDefault': 1},
         where: 'id = ?', whereArgs: [cardID]);
+
+    // Retourne une carte par son ID
+    Future<CardModel?> getCardById(int id) async {
+      final db = await database;
+      final result = await db.query(
+        'cards',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      if (result.isNotEmpty) {
+        return CardModel.fromMap(result.first);
+      }
+      return null;
+    }
   }
 }

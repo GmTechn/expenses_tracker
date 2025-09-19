@@ -1,5 +1,7 @@
+import 'package:expenses_tracker/components/myappbar.dart';
 import 'package:expenses_tracker/components/mytextfield.dart';
 import 'package:expenses_tracker/models/users.dart';
+import 'package:expenses_tracker/pages/dashboard.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:expenses_tracker/management/database.dart';
 import 'package:flutter/material.dart';
@@ -16,20 +18,30 @@ class _ListOfUsersState extends State<ListOfUsers> {
 
   // Users list
   List<AppUser> _users = [];
+
+  //list of user to use for search bar
   List<AppUser> _filteredUsers = [];
+
+  //calling the database
 
   final DatabaseManager _databaseManager = DatabaseManager();
 
+//initialising the database
   @override
   void initState() {
     super.initState();
     _initDb();
   }
 
+//loading users
+
   Future<void> _initDb() async {
     await _databaseManager.initialisation();
     _loadUsers();
   }
+
+  ///gettinhg a user by the function get all users
+  ///to filter for the seach function
 
   Future<void> _loadUsers() async {
     final users = await _databaseManager.getAllAppUsers();
@@ -39,7 +51,11 @@ class _ListOfUsersState extends State<ListOfUsers> {
     });
   }
 
-  // Search
+  ///Search function that goes through the db
+  ///by setting all chars to lower case
+  ///so if you look for a person with the first letter of their
+  ///name or email, you can get it
+
   void _searchUsers(String query) {
     final results = _users.where((user) {
       final fullName = '${user.fname} ${user.lname}'.toLowerCase();
@@ -53,25 +69,45 @@ class _ListOfUsersState extends State<ListOfUsers> {
     });
   }
 
-  // Delete user
+  ///Delete user from the database calling on the
+  ///function "delete user" from the db
+
   Future<void> _deleteUser(AppUser user) async {
     final confirm = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Delete this user?"),
-        content: Text("Are you sure you want to delete ${user.fname}?"),
+        backgroundColor: Color(0xff181a1e),
+        title: const Text(
+          "Delete this user?",
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
+        content: Text(
+          "Are you sure you want to delete ${user.fname}?",
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel',
-                style:
-                    TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete',
-                style:
-                    TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -83,7 +119,8 @@ class _ListOfUsersState extends State<ListOfUsers> {
     }
   }
 
-  // Edit user
+  /// Edit user by making use of the function
+  /// Edit user from the database
   Future<void> _editUser(AppUser user) async {
     final newFname = TextEditingController(text: user.fname);
     final newLname = TextEditingController(text: user.lname);
@@ -98,41 +135,59 @@ class _ListOfUsersState extends State<ListOfUsers> {
 
         return StatefulBuilder(
           builder: (context, setState) => AlertDialog(
-            title: const Text('Edit user info'),
+            backgroundColor: Color(0xff181a1e),
+            title: const Text(
+              'Edit user info',
+              style: TextStyle(color: Colors.white),
+            ),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   MyTextFormField(
-                      controller: newFname,
-                      hintText: 'First Name',
-                      obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.person_fill)),
+                    controller: newFname,
+                    hintText: 'First Name',
+                    obscureText: false,
+                    leadingIcon: const Icon(
+                      CupertinoIcons.person_fill,
+                      color: Colors.white70,
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   MyTextFormField(
-                      controller: newLname,
-                      hintText: 'Last Name',
-                      obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.person_fill)),
+                    controller: newLname,
+                    hintText: 'Last Name',
+                    obscureText: false,
+                    leadingIcon: const Icon(
+                      CupertinoIcons.person_fill,
+                      color: Colors.white70,
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   MyTextFormField(
-                      controller: newEmail,
-                      hintText: 'Email',
-                      obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.mail_solid)),
+                    controller: newEmail,
+                    hintText: 'Email',
+                    obscureText: false,
+                    leadingIcon: const Icon(
+                      CupertinoIcons.mail_solid,
+                      color: Colors.white70,
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   MyTextFormField(
                     controller: newPassword,
                     hintText: 'Password',
                     obscureText: !isPasswordVisible,
-                    leadingIcon:
-                        const Icon(Icons.lock, color: Color(0xff050c20)),
+                    leadingIcon: const Icon(
+                      CupertinoIcons.lock_fill,
+                      color: Colors.white70,
+                    ),
                     trailingIcon: IconButton(
                       icon: Icon(
                         isPasswordVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                        color: const Color(0xff050c20),
+                            ? CupertinoIcons.eye_slash_fill
+                            : CupertinoIcons.eye_fill,
+                        color: Colors.white70,
                       ),
                       onPressed: () {
                         setState(() {
@@ -143,19 +198,23 @@ class _ListOfUsersState extends State<ListOfUsers> {
                   ),
                   const SizedBox(height: 10),
                   MyTextFormField(
-                      controller: newPhone,
-                      hintText: 'Phone Number',
-                      obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.phone_fill)),
+                    controller: newPhone,
+                    hintText: 'Phone Number',
+                    obscureText: false,
+                    leadingIcon: const Icon(
+                      CupertinoIcons.phone_fill,
+                      color: Colors.white70,
+                    ),
+                  ),
                 ],
               ),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel',
-                    style: TextStyle(
-                        color: Colors.blue, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Cancel',
+                ),
               ),
               TextButton(
                 onPressed: () async {
@@ -194,10 +253,22 @@ class _ListOfUsersState extends State<ListOfUsers> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xff181a1e),
       appBar: AppBar(
-        title: const Text('List of Users',
-            style: TextStyle(color: Color(0xff050c20))),
-      ),
+        leading: IconButton(
+            onPressed: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => Dashboard(email: '')));
+            },
+            icon: Icon(Icons.reset_tv_rounded)),
+        title: Text('Users'),
+      )
+
+      // myAppBar(context, 'U S E R S',
+      // ),
+      ,
       body: Column(
         children: [
           Padding(
@@ -226,6 +297,9 @@ class _ListOfUsersState extends State<ListOfUsers> {
                 return Padding(
                   padding: const EdgeInsets.all(8),
                   child: Card(
+                    elevation: 1.0,
+                    shadowColor: Colors.white24,
+                    color: Color.fromARGB(255, 29, 32, 37),
                     margin: const EdgeInsets.symmetric(horizontal: 16),
                     child: ListTile(
                       title: Text('${user.fname} ${user.lname}'),
@@ -237,13 +311,13 @@ class _ListOfUsersState extends State<ListOfUsers> {
                               onPressed: () => _deleteUser(user),
                               icon: const Icon(
                                 CupertinoIcons.delete_solid,
-                                color: Color(0xff050c20),
+                                color: Colors.white24,
                               )),
                           IconButton(
                               onPressed: () => _editUser(user),
                               icon: const Icon(
                                 CupertinoIcons.pencil,
-                                color: Color(0xff050c20),
+                                color: Colors.white24,
                               )),
                         ],
                       ),

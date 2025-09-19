@@ -5,6 +5,7 @@ class TransactionModel {
   final double amount;
   final DateTime date;
   final String? logoPath;
+  final int? cardId; // ✅ ajouté
 
   TransactionModel({
     this.id,
@@ -13,9 +14,9 @@ class TransactionModel {
     required this.amount,
     required this.date,
     this.logoPath,
+    this.cardId, // ✅ ajouté
   });
 
-  // Convertit un objet en Map pour SQLite
   Map<String, dynamic> toMap() {
     final map = <String, dynamic>{
       'email': email,
@@ -23,12 +24,12 @@ class TransactionModel {
       'amount': amount,
       'date': date.toIso8601String(),
       'logoPath': logoPath,
+      'cardId': cardId, // ✅ ajouté
     };
     if (id != null) map['id'] = id;
     return map;
   }
 
-  // Crée un objet à partir d'une Map SQLite
   factory TransactionModel.fromMap(Map<String, dynamic> map) {
     return TransactionModel(
       id: map['id'],
@@ -37,10 +38,10 @@ class TransactionModel {
       amount: map['amount'],
       date: DateTime.parse(map['date']),
       logoPath: map['logoPath'],
+      cardId: map['cardId'], // ✅ ajouté
     );
   }
 
-  // Pour copier/modifier facilement
   TransactionModel copyWith({
     int? id,
     String? email,
@@ -48,6 +49,7 @@ class TransactionModel {
     double? amount,
     DateTime? date,
     String? logoPath,
+    int? cardId, // ✅ ajouté
   }) {
     return TransactionModel(
       id: id ?? this.id,
@@ -56,6 +58,7 @@ class TransactionModel {
       amount: amount ?? this.amount,
       date: date ?? this.date,
       logoPath: logoPath ?? this.logoPath,
+      cardId: cardId ?? this.cardId, // ✅ ajouté
     );
   }
 }

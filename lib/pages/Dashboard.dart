@@ -25,13 +25,31 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
+  //calling the database
   final DatabaseManager _databaseManager = DatabaseManager();
 
+//generating an app instance
   AppUser? _currentUser;
+
+//generating a card model
   CardModel? _defaultCard;
+
+  ///generating a transaction list of the recent
+  ///transactions so we can display the 5 most recent
+
   List<TransactionModel> _recentTransactions = [];
 
+  /// Generating a complete list of all transactions
+  /// so we can use them to calculate our total => income and expenses
+
+  List<TransactionModel> _allTransactions = [];
+
+//generating a photopath string
   String? _savedPhotoPath;
+
+//initializing states for
+  ///users, default card, profile pic
+  ///as well as recent transactions
 
   @override
   void initState() {
@@ -41,6 +59,10 @@ class _DashboardState extends State<Dashboard> {
     _loadSavedPhoto();
     _loadTransactions();
   }
+
+  ///using sharedpreferences to display
+  ///the profile picture saved in
+  ///the local database
 
   Future<void> _loadSavedPhoto() async {
     final prefs = await SharedPreferences.getInstance();
@@ -52,6 +74,10 @@ class _DashboardState extends State<Dashboard> {
     }
   }
 
+  ///This function allows your widget to react and update its state
+  /// or UI when its dependencies change,
+  /// ensuring the UI reflects the latest data or configuration.
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -59,6 +85,11 @@ class _DashboardState extends State<Dashboard> {
     _loadDefaultCard();
     _loadTransactions();
   }
+
+  ///loading users from the database so the
+  ///users info always appear on the dashboard
+  ///such as their name and profile picture
+  ///as well as the last saved state of the app
 
   Future<void> _loadUsers() async {
     await _databaseManager.initialisation();
@@ -68,6 +99,10 @@ class _DashboardState extends State<Dashboard> {
     });
   }
 
+  ///loading default card so that the default selected card
+  ///would always appear when the user
+  ///opens their dashboard
+
   Future<void> _loadDefaultCard() async {
     final card = await _databaseManager.getDefaultCard(widget.email);
     setState(() {
@@ -75,29 +110,55 @@ class _DashboardState extends State<Dashboard> {
     });
   }
 
+  ///loading recent transactions to display them
+  ///on the dashboard, from the transactions page
+  ///depending on the date of the transaction, meaning from oldest to newest
+  ///and only displaying x number of them
+
   Future<void> _loadTransactions() async {
     final transactions = await _databaseManager.getTransactions(widget.email);
     transactions
         .sort((a, b) => b.date.compareTo(a.date)); // Trier par date descendante
     setState(() {
+      _allTransactions = transactions;
       _recentTransactions =
-          transactions.take(4).toList(); // 4 dernières transactions
+          transactions.take(5).toList(); // 5 dernières transactions
     });
   }
 
-//total transactions
+//total transactions to sum up the total number of
+//incomes and expenses to separate
 
   double get totalTransactionsAmount =>
-      _recentTransactions.fold(0, (sum, item) => sum + item.amount);
+      _allTransactions.fold(0, (sum, item) => sum + item.amount);
+
 // Calcule la somme des revenus (Income)
-  double get totalIncome => _recentTransactions
+  double get totalIncome => _allTransactions
       .where((t) => t.amount >= 0)
       .fold(0, (sum, t) => sum + t.amount);
 
 // Calcule la somme des dépenses (Expense)
-  double get totalExpense => _recentTransactions
+  double get totalExpense => _allTransactions
       .where((t) => t.amount < 0)
       .fold(0, (sum, t) => sum + t.amount.abs());
+
+//solde de la carte a prendre en soustrayant
+//les expenses des incomes
+
+// Suppose _defaultCard!.amount = "$1700"
+// On parse la valeur en double
+  double get initialCardAmount {
+    if (_defaultCard == null) return 0.0;
+    // Supprimer le $ si présent
+    return double.tryParse(_defaultCard!.amount.replaceAll('\$', '')) ?? 0.0;
+  }
+
+// Solde actuel = montant initial + totalIncome - totalExpense
+  double get currentBalance {
+    final income = totalIncome; // toutes les transactions positives
+    final expense = totalExpense; // toutes les transactions négatives
+    return initialCardAmount + income - expense;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -219,7 +280,7 @@ class _DashboardState extends State<Dashboard> {
               // Card
               if (_defaultCard != null)
                 MyCards(
-                  amount: _defaultCard!.amount,
+                  amount: "${currentBalance.toStringAsFixed(2)}\$",
                   cardnumber: _defaultCard!.cardnumber,
                   expirydate: _defaultCard!.expirydate,
                   colorOne: Color(_defaultCard!.colorOne),

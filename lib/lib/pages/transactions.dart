@@ -1,10 +1,13 @@
 import 'dart:io';
+import 'package:expenses_tracker/management/balance_provider.dart';
 import 'package:expenses_tracker/models/transactions.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:expenses_tracker/components/mynavbar.dart';
 import 'package:expenses_tracker/components/mytextfield.dart';
 import 'package:expenses_tracker/management/database.dart';
+import 'package:provider/provider.dart';
+import 'package:expenses_tracker/management/balance_provider.dart';
 
 class TransactionsPage extends StatefulWidget {
   const TransactionsPage({super.key, required this.email});
@@ -28,25 +31,20 @@ class _TransactionsPageState extends State<TransactionsPage> {
         'https://w7.pngwing.com/pngs/589/546/png-transparent-apple-logo-new-york-city-brand-computer-apple-company-computer-logo.png',
     'Google':
         'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.png',
-    'Zara':
-        'https://logos-world.net/wp-content/uploads/2020/05/Zara-Logo.png', // ton lien qui fonctionnait
+    'Zara': 'https://logos-world.net/wp-content/uploads/2020/05/Zara-Logo.png',
     'H&M':
         'https://e7.pngegg.com/pngimages/43/204/png-clipart-logo-h-m-brand-clothing-logo-hm.png',
-    'Shein':
-        'https://1000logos.net/wp-content/uploads/2021/05/Shein-logo.png', // ton lien qui fonctionnait
+    'Shein': 'https://1000logos.net/wp-content/uploads/2021/05/Shein-logo.png',
     'Walmart':
         'https://www.per-accurate.com/wp-content/uploads/2023/08/walmart-logo-24.jpg',
     'Loblaws':
         'https://cdn.freebiesupply.com/logos/large/2x/loblaws-logo-png-transparent.png',
-
     'Nike':
         'https://www.muraldecal.com/en/img/asfs364-jpg/folder/products-listado-merchanthover/stickers-nike-on-your-logo.jpg',
     'Amazon': 'https://wallpapercave.com/wp/wp7771222.png',
     'Samsung': 'https://www.pc-canada.com/dd2/img/item/B-500x500/-/Samsung.jpg',
-
     'Microsoft':
         'https://static.vecteezy.com/system/resources/previews/014/018/578/non_2x/microsoft-logo-on-transparent-background-free-vector.jpg',
-
     'Facebook':
         'https://www.citypng.com/public/uploads/preview/round-blue-circle-contains-f-letter-facebook-logo-701751695134712lb9coc4kea.png',
     'Twitter':
@@ -71,6 +69,12 @@ class _TransactionsPageState extends State<TransactionsPage> {
       _transactions.clear();
       _transactions.addAll(data);
     });
+
+    // ✅ Update provider with current default card transactions
+    final provider = context.read<BalanceProvider>();
+    if (provider.defaultCardId != null) {
+      provider.setTransactionsForCard(provider.defaultCardId!, _transactions);
+    }
   }
 
   double get totalTransactionsAmount =>
@@ -84,16 +88,24 @@ class _TransactionsPageState extends State<TransactionsPage> {
           _selectedBrand != null ? brandLogos[_selectedBrand!] : null;
 
       TransactionModel transaction;
+      final provider = context.read<BalanceProvider>();
+
+      if (provider.defaultCardId == null) return; // No default card
+
       if (existing != null) {
         // Update
         transaction = existing.copyWith(
           place: place,
           amount: amount,
           logoPath: logoPath,
+          cardId: provider.defaultCardId!, // ensure it belongs to default card
         );
         await dbManager.updateTransaction(transaction);
         final index = _transactions.indexWhere((t) => t.id == existing.id);
         setState(() => _transactions[index] = transaction);
+
+        // Update provider
+        provider.updateTransaction(provider.defaultCardId!, transaction);
       } else {
         // Insert
         transaction = TransactionModel(
@@ -102,9 +114,13 @@ class _TransactionsPageState extends State<TransactionsPage> {
           amount: amount,
           date: DateTime.now(),
           logoPath: logoPath,
+          cardId: provider.defaultCardId!,
         );
         await dbManager.insertTransaction(transaction);
-        _loadTransactions(); // reload to get ID
+        _loadTransactions();
+
+        // Add to provider
+        provider.addTransaction(provider.defaultCardId!, transaction);
       }
 
       Navigator.pop(context);
@@ -232,6 +248,11 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<BalanceProvider>();
+    final transactionsForCard = provider.defaultCardId != null
+        ? provider.transactionsForCard(provider.defaultCardId!)
+        : _transactions;
+
     return Scaffold(
       backgroundColor: const Color(0xff181a1e),
       appBar: AppBar(
@@ -245,7 +266,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
       body: Column(
         children: [
           Expanded(
-            child: _transactions.isEmpty
+            child: transactionsForCard.isEmpty
                 ? const Center(
                     child: Text(
                       "No transactions yet",
@@ -253,9 +274,9 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     ),
                   )
                 : ListView.builder(
-                    itemCount: _transactions.length,
+                    itemCount: transactionsForCard.length,
                     itemBuilder: (ctx, index) {
-                      final t = _transactions[index];
+                      final t = transactionsForCard[index];
                       return Dismissible(
                         key: ValueKey(t.id),
                         background: Container(
@@ -264,11 +285,15 @@ class _TransactionsPageState extends State<TransactionsPage> {
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: const Icon(Icons.delete, color: Colors.white),
                         ),
-                        direction: DismissDirection
-                            .endToStart, // glisser vers la gauche pour supprimer
+                        direction: DismissDirection.endToStart,
                         onDismissed: (direction) async {
                           await dbManager.deleteTransaction(t.id!);
                           _loadTransactions();
+
+                          if (provider.defaultCardId != null) {
+                            provider.removeTransaction(
+                                provider.defaultCardId!, t);
+                          }
                         },
                         child: ListTile(
                           onTap: () => _openTransactionDialog(transaction: t),

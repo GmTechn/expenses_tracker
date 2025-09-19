@@ -4,6 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:expenses_tracker/management/database.dart';
 import 'package:flutter/material.dart';
 
+import 'package:expenses_tracker/components/myappbar.dart';
+
 class ListOfUsers extends StatefulWidget {
   const ListOfUsers({super.key});
 
@@ -16,15 +18,23 @@ class _ListOfUsersState extends State<ListOfUsers> {
 
   // Users list
   List<AppUser> _users = [];
+
+  ///users to filter and make use of the search bar
+
   List<AppUser> _filteredUsers = [];
+
+  //calling the database
 
   final DatabaseManager _databaseManager = DatabaseManager();
 
+//initialising db state
   @override
   void initState() {
     super.initState();
     _initDb();
   }
+
+//loading users from the db
 
   Future<void> _initDb() async {
     await _databaseManager.initialisation();
@@ -98,41 +108,62 @@ class _ListOfUsersState extends State<ListOfUsers> {
 
         return StatefulBuilder(
           builder: (context, setState) => AlertDialog(
-            title: const Text('Edit user info'),
+            title: const Text(
+              textAlign: TextAlign.center,
+              'Edit user info',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   MyTextFormField(
-                      controller: newFname,
-                      hintText: 'First Name',
-                      obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.person_fill)),
+                    controller: newFname,
+                    hintText: 'First Name',
+                    obscureText: false,
+                    leadingIcon: const Icon(
+                      CupertinoIcons.person,
+                      color: Colors.white,
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   MyTextFormField(
-                      controller: newLname,
-                      hintText: 'Last Name',
-                      obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.person_fill)),
+                    controller: newLname,
+                    hintText: 'Last Name',
+                    obscureText: false,
+                    leadingIcon: const Icon(
+                      CupertinoIcons.person,
+                      color: Colors.white,
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   MyTextFormField(
-                      controller: newEmail,
-                      hintText: 'Email',
-                      obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.mail_solid)),
+                    controller: newEmail,
+                    hintText: 'Email',
+                    obscureText: false,
+                    leadingIcon: const Icon(
+                      CupertinoIcons.mail,
+                      color: Colors.white,
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   MyTextFormField(
                     controller: newPassword,
                     hintText: 'Password',
                     obscureText: !isPasswordVisible,
-                    leadingIcon:
-                        const Icon(Icons.lock, color: Color(0xff050c20)),
+                    leadingIcon: const Icon(
+                      CupertinoIcons.lock,
+                      color: Colors.white,
+                    ),
                     trailingIcon: IconButton(
                       icon: Icon(
                         isPasswordVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                        color: const Color(0xff050c20),
+                            ? CupertinoIcons.eye_fill
+                            : CupertinoIcons.eye_slash_fill,
+                        color: Colors.white,
                       ),
                       onPressed: () {
                         setState(() {
@@ -143,19 +174,26 @@ class _ListOfUsersState extends State<ListOfUsers> {
                   ),
                   const SizedBox(height: 10),
                   MyTextFormField(
-                      controller: newPhone,
-                      hintText: 'Phone Number',
-                      obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.phone_fill)),
+                    controller: newPhone,
+                    hintText: 'Phone Number',
+                    obscureText: false,
+                    leadingIcon: const Icon(
+                      CupertinoIcons.phone,
+                      color: Colors.white,
+                    ),
+                  ),
                 ],
               ),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel',
-                    style: TextStyle(
-                        color: Colors.blue, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
+                ),
               ),
               TextButton(
                 onPressed: () async {
@@ -174,9 +212,13 @@ class _ListOfUsersState extends State<ListOfUsers> {
                   Navigator.pop(context);
                   _loadUsers();
                 },
-                child: const Text('Save',
-                    style: TextStyle(
-                        color: Colors.green, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Save',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               )
             ],
           ),
@@ -184,6 +226,9 @@ class _ListOfUsersState extends State<ListOfUsers> {
       },
     );
   }
+
+  ///disposing of the search controller after making use
+  ///of it for searching through the database
 
   @override
   void dispose() {
@@ -194,10 +239,8 @@ class _ListOfUsersState extends State<ListOfUsers> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('List of Users',
-            style: TextStyle(color: Color(0xff050c20))),
-      ),
+      backgroundColor: const Color(0xff181a1e),
+      appBar: myAppBar(context, 'U S E R S'),
       body: Column(
         children: [
           Padding(
@@ -237,14 +280,15 @@ class _ListOfUsersState extends State<ListOfUsers> {
                               onPressed: () => _deleteUser(user),
                               icon: const Icon(
                                 CupertinoIcons.delete_solid,
-                                color: Color(0xff050c20),
+                                color: Colors.red,
                               )),
                           IconButton(
-                              onPressed: () => _editUser(user),
-                              icon: const Icon(
-                                CupertinoIcons.pencil,
-                                color: Color(0xff050c20),
-                              )),
+                            onPressed: () => _editUser(user),
+                            icon: const Icon(
+                              CupertinoIcons.pencil,
+                              color: Color(0xff181a1e),
+                            ),
+                          ),
                         ],
                       ),
                     ),

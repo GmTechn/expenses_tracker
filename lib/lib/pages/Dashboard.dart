@@ -1,48 +1,37 @@
 import 'dart:io';
-
 import 'package:expenses_tracker/components/mybutton.dart';
 import 'package:expenses_tracker/components/mycards.dart';
 import 'package:expenses_tracker/components/mynavbar.dart';
 import 'package:expenses_tracker/components/mytransaction.dart';
+import 'package:expenses_tracker/management/balance_provider.dart';
 import 'package:expenses_tracker/management/database.dart';
 import 'package:expenses_tracker/models/cards.dart';
+import 'package:expenses_tracker/models/transactions.dart';
 import 'package:expenses_tracker/models/users.dart';
 import 'package:expenses_tracker/pages/cardspage.dart';
-import 'package:expenses_tracker/pages/login.dart';
 import 'package:expenses_tracker/pages/profile.dart';
 import 'package:expenses_tracker/services/listofusers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // ✅ added
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:expenses_tracker/management/balance_provider.dart';
 
 class Dashboard extends StatefulWidget {
-  final String email; // ✅ keep the email passed from signup
+  final String email;
 
-  const Dashboard({
-    super.key,
-    required this.email,
-  });
+  const Dashboard({super.key, required this.email});
 
   @override
   State<Dashboard> createState() => _DashboardState();
 }
 
 class _DashboardState extends State<Dashboard> {
-//Generating database instance
   final DatabaseManager _databaseManager = DatabaseManager();
-
-//creating an instance of an appuser = current user
-
   AppUser? _currentUser;
-
-//Default card
   CardModel? _defaultCard;
-
-//photo path to persit
-
+  List<TransactionModel> _recentTransactions = [];
   String? _savedPhotoPath;
-
-//initialising state
 
   @override
   void initState() {
@@ -50,6 +39,7 @@ class _DashboardState extends State<Dashboard> {
     _loadUsers();
     _loadDefaultCard();
     _loadSavedPhoto();
+    _loadTransactions();
   }
 
   Future<void> _loadSavedPhoto() async {
@@ -62,16 +52,13 @@ class _DashboardState extends State<Dashboard> {
     }
   }
 
-  //--Refreshing the page to reload the page
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _loadUsers();
     _loadDefaultCard();
+    _loadTransactions();
   }
-
-//loading users to display name on dashboard
 
   Future<void> _loadUsers() async {
     await _databaseManager.initialisation();
@@ -81,15 +68,47 @@ class _DashboardState extends State<Dashboard> {
     });
   }
 
-//loading cards to display
-
-  //loading default card to display
   Future<void> _loadDefaultCard() async {
     final card = await _databaseManager.getDefaultCard(widget.email);
-    setState(() {
-      _defaultCard = card;
-    });
+    if (card != null) {
+      setState(() => _defaultCard = card);
+
+      final provider = context.read<BalanceProvider>();
+      provider.setDefaultCard(card.id!);
+
+      final cards = await _databaseManager.getCards(widget.email);
+      provider.setCards(cards);
+
+      final transactions =
+          await _databaseManager.getTransactionsByCard(widget.email, card.id!);
+      provider.setTransactionsForCard(card.id!, transactions);
+    }
   }
+
+  Future<void> _loadTransactions() async {
+    if (_defaultCard != null) {
+      final transactions = await _databaseManager.getTransactionsByCard(
+          widget.email, _defaultCard!.id!);
+      transactions.sort((a, b) => b.date.compareTo(a.date));
+      setState(() {
+        _recentTransactions = transactions.take(5).toList();
+      });
+
+      context
+          .read<BalanceProvider>()
+          .setTransactionsForCard(_defaultCard!.id! as int, transactions);
+    }
+  }
+
+  double get totalIncome => _recentTransactions
+      .where((t) => t.amount >= 0)
+      .fold(0, (sum, t) => sum + t.amount);
+
+  double get totalExpense => _recentTransactions
+      .where((t) => t.amount < 0)
+      .fold(0, (sum, t) => sum + t.amount.abs());
+
+  double get currentBalance => context.watch<BalanceProvider>().currentBalance;
 
   @override
   Widget build(BuildContext context) {
@@ -98,10 +117,8 @@ class _DashboardState extends State<Dashboard> {
       appBar: AppBar(
         backgroundColor: const Color(0xff181a1e),
         automaticallyImplyLeading: false,
-        title: const Text(
-          'D A S H B O A R D',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text('D A S H B O A R D',
+            style: TextStyle(color: Colors.white)),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -109,22 +126,14 @@ class _DashboardState extends State<Dashboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// Header Container : Profile button
-              /// Welcome message
-              /// Username
-              /// notifications bell
-
               Container(
-                margin: const EdgeInsets.symmetric(
-                  vertical: 8,
-                ),
-                padding: EdgeInsets.symmetric(vertical: 16),
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
-                  color: Color.fromARGB(255, 35, 37, 46),
+                  color: const Color.fromARGB(255, 35, 37, 46),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     const SizedBox(width: 40),
                     GestureDetector(
@@ -132,9 +141,7 @@ class _DashboardState extends State<Dashboard> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (_) => ProfilePage(
-                                    email: widget.email,
-                                  )),
+                              builder: (_) => ProfilePage(email: widget.email)),
                         ).then((_) => _loadUsers());
                       },
                       child: CircleAvatar(
@@ -151,39 +158,28 @@ class _DashboardState extends State<Dashboard> {
                         child: (_currentUser?.photoPath ?? '').isEmpty &&
                                 (_savedPhotoPath == null ||
                                     _savedPhotoPath!.isEmpty)
-                            ? const Icon(
-                                CupertinoIcons.person_fill,
-                                color: Color(0xff050c20),
-                              )
+                            ? const Icon(CupertinoIcons.person_fill,
+                                color: Color(0xff050c20))
                             : null,
                       ),
                     ),
-                    SizedBox(
-                      width: 14,
-                    ),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Welcome back,',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white54),
-                          ),
-                          Row(
-                            children: [
-                              Text(
-                                _currentUser != null
-                                    ? "${_currentUser!.fname} ${_currentUser!.lname}"
-                                    : "Guest",
-                                style: const TextStyle(
-                                  fontSize: 16,
+                          const Text('Welcome back,',
+                              style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
+                                  color: Colors.white54)),
+                          Text(
+                            _currentUser != null
+                                ? "${_currentUser!.fname} ${_currentUser!.lname}"
+                                : "Guest",
+                            style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
                           ),
                         ],
                       ),
@@ -196,32 +192,28 @@ class _DashboardState extends State<Dashboard> {
                               size: 28, color: Colors.white),
                         ),
                         Positioned(
-                            right: 10,
-                            top: 8,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                  color: Colors.red, shape: BoxShape.circle),
-                              child: const Text(
-                                '7',
+                          right: 10,
+                          top: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                                color: Colors.red, shape: BoxShape.circle),
+                            child: const Text('7',
                                 style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 10),
-                              ),
-                            ))
+                                    fontSize: 10)),
+                          ),
+                        ),
                       ],
                     )
                   ],
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // Card
               if (_defaultCard != null)
                 MyCards(
-                  amount: _defaultCard!.amount,
+                  amount: "\$${currentBalance.toStringAsFixed(2)}",
                   cardnumber: _defaultCard!.cardnumber,
                   expirydate: _defaultCard!.expirydate,
                   colorOne: Color(_defaultCard!.colorOne),
@@ -236,35 +228,25 @@ class _DashboardState extends State<Dashboard> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => MyCardsPage(
-                              email: widget.email,
-                            ),
-                          ),
+                              builder: (context) =>
+                                  MyCardsPage(email: widget.email)),
                         );
                       },
-                      label: Text(
-                        'Set up default card',
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      icon: Icon(
-                        CupertinoIcons.creditcard_fill,
-                        color: Colors.white,
-                      ),
+                      label: const Text('Set up default card',
+                          style: TextStyle(color: Colors.white70)),
+                      icon: const Icon(CupertinoIcons.creditcard_fill,
+                          color: Colors.white),
                     ),
                     MyCards(
-                      amount: '0.00\$',
-                      cardnumber: '0000 0000 0000 0000',
-                      expirydate: 'mm/yy',
-                      username: 'no username',
-                      colorOne: Colors.blue,
-                      colorTwo: Colors.amber,
-                    ),
+                        amount: '0.00\$',
+                        cardnumber: '0000 0000 0000 0000',
+                        expirydate: 'mm/yy',
+                        username: 'no username',
+                        colorOne: Colors.blue,
+                        colorTwo: Colors.amber),
                   ],
                 ),
-
               const SizedBox(height: 20),
-
-              // Income & Expenses
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -274,17 +256,14 @@ class _DashboardState extends State<Dashboard> {
                         onPressed: () {},
                         heroTag: "income",
                         backgroundColor: Colors.green,
-                        child: const Icon(
-                          CupertinoIcons.arrow_down_circle_fill,
-                          color: Colors.white,
-                        ),
+                        child: const Icon(CupertinoIcons.arrow_down_circle_fill,
+                            color: Colors.white),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        '+\$250 Income',
-                        style: TextStyle(
-                            color: Colors.green, fontWeight: FontWeight.bold),
-                      ),
+                      Text('+\$${totalIncome.toStringAsFixed(2)} Income',
+                          style: const TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold)),
                     ],
                   ),
                   Column(
@@ -293,58 +272,41 @@ class _DashboardState extends State<Dashboard> {
                         onPressed: () {},
                         heroTag: "expense",
                         backgroundColor: Colors.red,
-                        child: const Icon(
-                          CupertinoIcons.arrow_up_circle_fill,
-                          color: Colors.white,
-                        ),
+                        child: const Icon(CupertinoIcons.arrow_up_circle_fill,
+                            color: Colors.white),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        '-\$50 Expense',
-                        style: TextStyle(
-                            color: Colors.red, fontWeight: FontWeight.bold),
-                      ),
+                      Text('-\$${totalExpense.toStringAsFixed(2)} Expense',
+                          style: const TextStyle(
+                              color: Colors.red, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ],
               ),
-
               const SizedBox(height: 20),
-
-              const Text(
-                'Transactions',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    fontSize: 18),
-              ),
+              const Text('Recent Transactions',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: 18)),
               const SizedBox(height: 10),
-
-              const Mytransaction(
-                logo: 'assets/images/apple.png',
-                title: 'Apple',
-                date: '22 Sept 2024',
-                amount: -45,
+              Column(
+                children: _recentTransactions.map((t) {
+                  return Mytransaction(
+                      logo: t.logoPath ?? 'assets/images/apple.png',
+                      title: t.place ?? "",
+                      date: "${t.date.day}/${t.date.month}/${t.date.year}",
+                      amount: t.amount);
+                }).toList(),
               ),
-              const Mytransaction(
-                  logo: 'assets/images/google.png',
-                  title: 'Google Drive',
-                  date: '21 Avr 2025',
-                  amount: -2),
-              const Mytransaction(
-                  logo: 'assets/images/interact.png',
-                  title: 'Interact Transfert',
-                  date: '02 Mai 2025',
-                  amount: 200),
-
+              const SizedBox(height: 20),
               MyButton(
                 textbutton: 'Users',
                 onTap: () {
                   Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const ListOfUsers()),
-                  ).then((_) {
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const ListOfUsers())).then((_) {
                     _loadUsers();
                   });
                 },
@@ -355,12 +317,7 @@ class _DashboardState extends State<Dashboard> {
           ),
         ),
       ),
-
-      // ✅ Pass the actual email here!
-      bottomNavigationBar: MyNavBar(
-        currentIndex: 0,
-        email: widget.email,
-      ),
+      bottomNavigationBar: MyNavBar(currentIndex: 0, email: widget.email),
     );
   }
 }

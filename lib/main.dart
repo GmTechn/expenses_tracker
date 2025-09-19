@@ -42,8 +42,8 @@ class MyApp extends StatelessWidget {
       /// ✅ Si user existe → Dashboard
       /// ✅ Sinon → SignUp (car DB est vide au lancement)
       home: (initialEmail != null && initialEmail!.isNotEmpty)
-          ? TransactionsPage(email: initialEmail!) // on utilise le vrai email
-          : const LoginPage(email: ''), // email vide si null
+          ? LoginPage(email: initialEmail!) // on utilise le vrai email
+          : const Dashboard(email: ''), // email vide si null
 
       onGenerateRoute: (settings) {
         final args = settings.arguments as Map<String, dynamic>?;
@@ -55,10 +55,10 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => Dashboard(email: args?['email'] ?? ''),
             );
-          case '/transactions':
-            return MaterialPageRoute(
-              builder: (_) => TransactionsPage(email: args?['email'] ?? ''),
-            );
+          // case '/transactions':
+          //   return MaterialPageRoute(
+          //     builder: (_) => TransactionsPage(email: args?['email'] ?? ''),
+          //   );
           case '/mycards':
             return MaterialPageRoute(
               builder: (_) => MyCardsPage(email: args?['email'] ?? ''),

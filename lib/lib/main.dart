@@ -4,10 +4,11 @@ import 'package:expenses_tracker/pages/signup.dart';
 import 'package:expenses_tracker/services/listofusers.dart';
 import 'package:flutter/material.dart';
 import 'package:expenses_tracker/pages/dashboard.dart';
-import 'package:expenses_tracker/pages/transactions.dart';
 import 'package:expenses_tracker/pages/cardspage.dart';
 import 'package:expenses_tracker/pages/profile.dart';
 import 'package:expenses_tracker/management/sessionmanager.dart';
+import 'package:provider/provider.dart';
+import 'package:expenses_tracker/management/balance_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,7 +25,12 @@ void main() async {
   // Récupère l'utilisateur courant (email si connecté)
   final currentUserEmail = await SessionManager.getCurrentUser();
 
-  runApp(MyApp(initialEmail: currentUserEmail));
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => BalanceProvider(),
+      child: MyApp(initialEmail: currentUserEmail),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -42,10 +48,12 @@ class MyApp extends StatelessWidget {
       /// ✅ Si user existe → Dashboard
       /// ✅ Sinon → SignUp (car DB est vide au lancement)
       home: initialEmail != null && initialEmail!.isNotEmpty
-          ? TransactionsPage(
+          ? LoginPage(
               email: '',
             )
-          : Dashboard(email: initialEmail!),
+          : Dashboard(
+              email: initialEmail!,
+            ),
 
       onGenerateRoute: (settings) {
         final args = settings.arguments as Map<String, dynamic>?;
@@ -57,10 +65,10 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => Dashboard(email: args?['email'] ?? ''),
             );
-          case '/transactions':
-            return MaterialPageRoute(
-              builder: (_) => TransactionsPage(email: args?['email'] ?? ''),
-            );
+          // case '/transactions':
+          //   return MaterialPageRoute(
+          //     builder: (_) => TransactionsPage(email: args?['email'] ?? ''),
+          //   );
           case '/mycards':
             return MaterialPageRoute(
               builder: (_) => MyCardsPage(email: args?['email'] ?? ''),
