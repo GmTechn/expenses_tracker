@@ -147,17 +147,17 @@ class _DashboardState extends State<Dashboard> {
 
 // Suppose _defaultCard!.amount = "$1700"
 // On parse la valeur en double
-  double get initialCardAmount {
+  double? get initialCardAmount {
     if (_defaultCard == null) return 0.0;
     // Supprimer le $ si présent
-    return double.tryParse(_defaultCard!.amount.replaceAll('\$', '')) ?? 0.0;
+    return _defaultCard?.amount;
   }
 
 // Solde actuel = montant initial + totalIncome - totalExpense
   double get currentBalance {
     final income = totalIncome; // toutes les transactions positives
     final expense = totalExpense; // toutes les transactions négatives
-    return initialCardAmount + income - expense;
+    return initialCardAmount! + income - expense;
   }
 
   @override

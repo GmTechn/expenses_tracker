@@ -5,7 +5,8 @@ class TransactionModel {
   final double amount;
   final DateTime date;
   final String? logoPath;
-  final int? cardId; // ✅ ajouté
+  final int cardId;
+  final String type; // 'income' ou 'expense'
 
   TransactionModel({
     this.id,
@@ -14,20 +15,43 @@ class TransactionModel {
     required this.amount,
     required this.date,
     this.logoPath,
-    this.cardId, // ✅ ajouté
+    required this.cardId,
+    this.type = 'expense',
   });
 
+  TransactionModel copyWith({
+    int? id,
+    String? email,
+    String? place,
+    double? amount,
+    DateTime? date,
+    String? logoPath,
+    int? cardId,
+    String? type,
+  }) {
+    return TransactionModel(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      place: place ?? this.place,
+      amount: amount ?? this.amount,
+      date: date ?? this.date,
+      logoPath: logoPath ?? this.logoPath,
+      cardId: cardId ?? this.cardId,
+      type: type ?? this.type,
+    );
+  }
+
   Map<String, dynamic> toMap() {
-    final map = <String, dynamic>{
+    return {
+      'id': id,
       'email': email,
       'place': place,
       'amount': amount,
       'date': date.toIso8601String(),
       'logoPath': logoPath,
-      'cardId': cardId, // ✅ ajouté
+      'cardId': cardId,
+      'type': type, // ✅ ajouter ici
     };
-    if (id != null) map['id'] = id;
-    return map;
   }
 
   factory TransactionModel.fromMap(Map<String, dynamic> map) {
@@ -38,27 +62,8 @@ class TransactionModel {
       amount: map['amount'],
       date: DateTime.parse(map['date']),
       logoPath: map['logoPath'],
-      cardId: map['cardId'], // ✅ ajouté
-    );
-  }
-
-  TransactionModel copyWith({
-    int? id,
-    String? email,
-    String? place,
-    double? amount,
-    DateTime? date,
-    String? logoPath,
-    int? cardId, // ✅ ajouté
-  }) {
-    return TransactionModel(
-      id: id ?? this.id,
-      email: email ?? this.email,
-      place: place ?? this.place,
-      amount: amount ?? this.amount,
-      date: date ?? this.date,
-      logoPath: logoPath ?? this.logoPath,
-      cardId: cardId ?? this.cardId, // ✅ ajouté
+      cardId: map['cardId'],
+      type: map['type'] ?? 'expense', // default si null
     );
   }
 }

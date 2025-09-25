@@ -43,7 +43,7 @@ class _MyCardsPageState extends State<MyCardsPage> {
 
   void _cardAddEditDialog({CardModel? card}) {
     final TextEditingController amountController =
-        TextEditingController(text: card?.amount.replaceAll('\$', ''));
+        TextEditingController(text: card != null ? card.amount.toString() : '');
 
     final TextEditingController cardNumberController =
         TextEditingController(text: card?.cardnumber ?? '');
@@ -185,7 +185,7 @@ class _MyCardsPageState extends State<MyCardsPage> {
                         final newCard = CardModel(
                           id: card?.id,
                           email: widget.email,
-                          amount: "\$${amountController.text}",
+                          amount: double.tryParse(amountController.text) ?? 0.0,
                           cardnumber: cardNumberController.text,
                           expirydate: expiryController.text,
                           username: usernameController.text,
@@ -244,7 +244,7 @@ class _MyCardsPageState extends State<MyCardsPage> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       MyCards(
-                        amount: card.amount,
+                        amount: card.amount.toStringAsFixed(2),
                         cardnumber: card.cardnumber,
                         expirydate: card.expirydate,
                         username: card.username,

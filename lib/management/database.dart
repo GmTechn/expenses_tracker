@@ -19,7 +19,7 @@ class DatabaseManager {
   Future<void> initialisation() async {
     _database = await openDatabase(
       join(await getDatabasesPath(), 'users_database.db'),
-      version: 3,
+      version: 4,
       onCreate: (db, version) async {
         // --- Users ---
         await db.execute(
@@ -43,7 +43,9 @@ class DatabaseManager {
             amount REAL,
             date TEXT,
             logoPath TEXT,
-            cardId INTEGER
+            cardId INTEGER,
+            type TEXT DEFAULT 'expense'
+
           )''',
         );
 
@@ -64,11 +66,15 @@ class DatabaseManager {
         );
       },
       onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
+        if (oldVersion < 4) {
           await db.execute(
               'ALTER TABLE cards ADD COLUMN isDefault INTEGER DEFAULT 0');
           await db.execute(
               'ALTER TABLE transactions ADD COLUMN cardId INTEGER'); // ✅ ajouté
+          await db
+              .execute('ALTER TABLE cards ADD COLUMN amount REAL DEFAULT 0');
+          await db.execute(
+              'ALTER TABLE transactions ADD COLUMN type TEXT DEFAULT "expense"');
         }
       },
     );

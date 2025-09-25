@@ -1,13 +1,13 @@
 class CardModel {
   final int? id;
   final String email;
-  final String amount;
+  final double amount;
   final String cardnumber;
   final String expirydate;
   final String username;
   final int colorOne;
   final int colorTwo;
-  final int isDefault; // ✅ colonne isDefault
+  final int isDefault;
 
   CardModel({
     this.id,
@@ -18,10 +18,9 @@ class CardModel {
     required this.username,
     required this.colorOne,
     required this.colorTwo,
-    this.isDefault = 0, // valeur par défaut = 0
+    this.isDefault = 0,
   });
 
-  // Convertit CardModel en Map pour SQLite
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -36,26 +35,23 @@ class CardModel {
     };
   }
 
-  // Crée un CardModel à partir d'un Map (SQLite)
   factory CardModel.fromMap(Map<String, dynamic> map) {
     return CardModel(
-      id: map['id'] is int
-          ? map['id'] as int
-          : int.tryParse(map['id'].toString()),
+      id: map['id'] as int?,
       email: map['email']?.toString() ?? '',
-      amount: map['amount']?.toString() ?? '0',
+      amount: map['amount'] is double
+          ? map['amount'] as double
+          : map['amount'] is int
+              ? (map['amount'] as int).toDouble()
+              : double.tryParse(map['amount'].toString()) ?? 0.0,
       cardnumber: map['cardnumber']?.toString() ?? '',
       expirydate: map['expirydate']?.toString() ?? '',
       username: map['username']?.toString() ?? '',
-      colorOne: map['colorOne'] is int
-          ? map['colorOne']
-          : int.tryParse(map['colorOne'].toString()) ?? 0,
-      colorTwo: map['colorTwo'] is int
-          ? map['colorTwo']
-          : int.tryParse(map['colorTwo'].toString()) ?? 0,
-      isDefault: map['isDefault'] is int
-          ? map['isDefault']
-          : int.tryParse(map['isDefault'].toString()) ?? 0,
+      colorOne: map['colorOne'] as int? ?? 0,
+      colorTwo: map['colorTwo'] as int? ?? 0,
+      isDefault: map['isDefault'] as int? ?? 0,
     );
   }
+
+  static empty() {}
 }

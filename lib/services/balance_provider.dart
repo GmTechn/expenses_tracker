@@ -1,5 +1,5 @@
+import 'package:expenses_tracker/models/cards.dart';
 import 'package:flutter/material.dart';
-import '../models/cards.dart';
 import '../models/transactions.dart';
 
 class BalanceProvider extends ChangeNotifier {
@@ -62,7 +62,15 @@ class BalanceProvider extends ChangeNotifier {
   }
 
   double totalBalance(int cardId) {
+    final card = _cards.firstWhere(
+      (c) => c.id == cardId,
+      orElse: () => CardModel.empty(),
+    );
+
+    final baseAmount = card.amount;
     final transactions = _cardTransactions[cardId] ?? [];
-    return transactions.fold(0.0, (sum, t) => sum + t.amount);
+    final transactionsSum = transactions.fold(0.0, (sum, t) => sum + t.amount);
+
+    return baseAmount + transactionsSum;
   }
 }

@@ -1,4 +1,4 @@
-import 'package:expenses_tracker/management/balance_provider.dart';
+import 'package:expenses_tracker/services/balance_provider.dart';
 import 'package:expenses_tracker/models/transactions.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -23,16 +23,19 @@ class _TransactionsPageState extends State<TransactionsPage> {
   final _placeController = TextEditingController();
   final _amountController = TextEditingController();
   String? _selectedBrand;
+  String? _selectedType;
 
   final Map<String, String> brandLogos = {
     'Apple':
         'https://w7.pngwing.com/pngs/589/546/png-transparent-apple-logo-new-york-city-brand-computer-apple-company-computer-logo.png',
     'Google':
-        'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.png',
+        'https://4kwallpapers.com/images/wallpapers/google-logo-5k-8k-7680x4320-11298.png',
     'Zara': 'https://logos-world.net/wp-content/uploads/2020/05/Zara-Logo.png',
+    // ton lien qui fonctionnait
     'H&M':
         'https://e7.pngegg.com/pngimages/43/204/png-clipart-logo-h-m-brand-clothing-logo-hm.png',
-    'Shein': 'https://1000logos.net/wp-content/uploads/2021/05/Shein-logo.png',
+    'Shein':
+        'https://1000logos.net/wp-content/uploads/2021/05/Shein-logo.png', // ton lien qui fonctionnait
     'Walmart':
         'https://www.per-accurate.com/wp-content/uploads/2023/08/walmart-logo-24.jpg',
     'Loblaws':
@@ -53,7 +56,17 @@ class _TransactionsPageState extends State<TransactionsPage> {
     'Spotify':
         'https://www.freepnglogos.com/uploads/spotify-logo-png/spotify-logo-spotify-symbol-3.png',
     'Netflix': 'https://images3.alphacoders.com/115/1152293.png',
+    'Paypal': 'https://static.cdnlogo.com/logos/p/9/paypal.png',
+    'Interact': 'https://download.logo.wine/logo/Interac/Interac-Logo.wine.png',
+    'Wise':
+        'https://d21buns5ku92am.cloudfront.net/69645/images/470455-Frame%2039263-cdfad6-medium-1677657684.png',
+    'Direct Deposit':
+        'https://www.shutterstock.com/image-vector/building-vector-icon-column-bank-600nw-1930635143.jpg',
+    'MoneyGram':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/MoneyGram_Logo.svg/2560px-MoneyGram_Logo.svg.png',
   };
+
+  List<String> get sortedBrands => brandLogos.keys.toList()..sort();
 
   @override
   void initState() {
@@ -68,15 +81,23 @@ class _TransactionsPageState extends State<TransactionsPage> {
       _transactions.addAll(data);
     });
 
-    // ✅ Update provider with current default card transactions
     final provider = context.read<BalanceProvider>();
     if (provider.defaultCardId != null) {
       provider.setTransactionsForCard(provider.defaultCardId!, _transactions);
     }
   }
 
-  double get totalTransactionsAmount =>
-      _transactions.fold(0, (sum, item) => sum + item.amount);
+  double get totalTransactionsAmount {
+    double total = 0;
+    for (var t in _transactions) {
+      if (t.type == 'income') {
+        total += t.amount;
+      } else {
+        total -= t.amount;
+      }
+    }
+    return total;
+  }
 
   Future<void> _addOrUpdateTransaction({TransactionModel? existing}) async {
     if (_formKey.currentState!.validate()) {
@@ -84,47 +105,48 @@ class _TransactionsPageState extends State<TransactionsPage> {
       final amount = double.parse(_amountController.text);
       final logoPath =
           _selectedBrand != null ? brandLogos[_selectedBrand!] : null;
+      final type = _selectedType!;
+
+      final provider = context.read<BalanceProvider>();
+      if (provider.defaultCardId == null) return;
 
       TransactionModel transaction;
-      final provider = context.read<BalanceProvider>();
-
-      if (provider.defaultCardId == null) return; // No default card
-
       if (existing != null) {
-        // Update
         transaction = existing.copyWith(
           place: place,
           amount: amount,
           logoPath: logoPath,
-          cardId: provider.defaultCardId!, // ensure it belongs to default card
+          type: type,
+          cardId: provider.defaultCardId!,
         );
         await dbManager.updateTransaction(transaction);
+
         final index = _transactions.indexWhere((t) => t.id == existing.id);
         setState(() => _transactions[index] = transaction);
 
-        // Update provider
         provider.updateTransaction(provider.defaultCardId!, transaction);
       } else {
-        // Insert
         transaction = TransactionModel(
           email: widget.email,
           place: place,
           amount: amount,
           date: DateTime.now(),
           logoPath: logoPath,
+          type: type,
           cardId: provider.defaultCardId!,
         );
         await dbManager.insertTransaction(transaction);
-        _loadTransactions();
 
-        // Add to provider
+        setState(() => _transactions.add(transaction));
         provider.addTransaction(provider.defaultCardId!, transaction);
       }
 
-      Navigator.pop(context);
       _placeController.clear();
       _amountController.clear();
       _selectedBrand = null;
+      _selectedType = null;
+
+      if (mounted) Navigator.of(context).pop();
     }
   }
 
@@ -133,9 +155,12 @@ class _TransactionsPageState extends State<TransactionsPage> {
       _placeController.text = transaction.place;
       _amountController.text = transaction.amount.toString();
       _selectedBrand = brandLogos.entries
-          .firstWhere((entry) => entry.value == transaction.logoPath,
-              orElse: () => const MapEntry('', ''))
+          .firstWhere(
+            (entry) => entry.value == transaction.logoPath,
+            orElse: () => const MapEntry('', ''),
+          )
           .key;
+      _selectedType = transaction.type;
     }
 
     showDialog(
@@ -161,10 +186,10 @@ class _TransactionsPageState extends State<TransactionsPage> {
                   MyTextFormField(
                     leadingIcon: const Icon(CupertinoIcons.placemark),
                     controller: _placeController,
-                    hintText: 'Place',
+                    hintText: 'Merchant',
                     obscureText: false,
                     validator: (value) =>
-                        value!.isEmpty ? "Enter a place" : null,
+                        value!.isEmpty ? "Enter a location" : null,
                   ),
                   const SizedBox(height: 10),
                   MyTextFormField(
@@ -179,34 +204,91 @@ class _TransactionsPageState extends State<TransactionsPage> {
                   ),
                   const SizedBox(height: 10),
                   DropdownButtonFormField<String>(
-                    value: brandLogos.containsKey(_selectedBrand)
-                        ? _selectedBrand
-                        : null,
-                    hint: const Text(
-                      'Select Brand',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                    items: brandLogos.keys
-                        .map(
-                          (brand) => DropdownMenuItem(
-                            value: brand,
-                            child: Text(brand),
-                          ),
-                        )
+                    value: _selectedBrand,
+                    items: sortedBrands
+                        .map((brand) => DropdownMenuItem(
+                              value: brand,
+                              child: Text(brand,
+                                  style: const TextStyle(color: Colors.white)),
+                            ))
                         .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedBrand = value;
-                      });
-                    },
-                    dropdownColor: const Color(0xff181a1e),
+                    onChanged: (value) =>
+                        setState(() => _selectedBrand = value),
+                    validator: (value) =>
+                        value == null ? 'Select a brand' : null,
                     style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white54),
+                    dropdownColor: const Color(0xff282b32),
+                    decoration: InputDecoration(
+                      fillColor: const Color.fromARGB(255, 40, 43, 50),
+                      filled: true,
+                      prefixIcon:
+                          const Icon(CupertinoIcons.tag, color: Colors.white),
+                      hintText: 'Select Brand',
+                      hintStyle: const TextStyle(color: Colors.white54),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                            color: Color.fromARGB(255, 40, 43, 50)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.white),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.red),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.red),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                  )
+                  ),
+                  const SizedBox(height: 10),
+                  DropdownButtonFormField<String>(
+                    value: _selectedType,
+                    items: const [
+                      DropdownMenuItem(
+                          value: 'income',
+                          child: Text('Income',
+                              style: TextStyle(color: Colors.white))),
+                      DropdownMenuItem(
+                          value: 'expense',
+                          child: Text('Expense',
+                              style: TextStyle(color: Colors.white))),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => _selectedType = value!),
+                    validator: (value) =>
+                        value == null ? 'Select a type' : null,
+                    style: const TextStyle(color: Colors.white),
+                    dropdownColor: const Color(0xff282b32),
+                    decoration: InputDecoration(
+                      fillColor: const Color.fromARGB(255, 40, 43, 50),
+                      filled: true,
+                      prefixIcon: const Icon(CupertinoIcons.money_dollar,
+                          color: Colors.white),
+                      hintText: 'Select Type',
+                      hintStyle: const TextStyle(color: Colors.white54),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                            color: Color.fromARGB(255, 40, 43, 50)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.white),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.red),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.red),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -217,24 +299,16 @@ class _TransactionsPageState extends State<TransactionsPage> {
               children: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: const Text('Cancel',
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
                 TextButton(
                   onPressed: () =>
                       _addOrUpdateTransaction(existing: transaction),
-                  child: const Text(
-                    "Save",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: const Text('Save',
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -254,10 +328,8 @@ class _TransactionsPageState extends State<TransactionsPage> {
     return Scaffold(
       backgroundColor: const Color(0xff181a1e),
       appBar: AppBar(
-        title: const Text(
-          'T R A N S A C T I O N S',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text('T R A N S A C T I O N S',
+            style: TextStyle(color: Colors.white)),
         automaticallyImplyLeading: false,
         backgroundColor: const Color(0xff181a1e),
       ),
@@ -266,11 +338,8 @@ class _TransactionsPageState extends State<TransactionsPage> {
           Expanded(
             child: transactionsForCard.isEmpty
                 ? const Center(
-                    child: Text(
-                      "No transactions yet",
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                  )
+                    child: Text("No transactions yet",
+                        style: TextStyle(color: Colors.white70)))
                 : ListView.builder(
                     itemCount: transactionsForCard.length,
                     itemBuilder: (ctx, index) {
@@ -278,16 +347,15 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       return Dismissible(
                         key: ValueKey(t.id),
                         background: Container(
-                          color: Colors.red,
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: const Icon(Icons.delete, color: Colors.white),
-                        ),
+                            color: Colors.red,
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child:
+                                const Icon(Icons.delete, color: Colors.white)),
                         direction: DismissDirection.endToStart,
                         onDismissed: (direction) async {
                           await dbManager.deleteTransaction(t.id!);
                           _loadTransactions();
-
                           if (provider.defaultCardId != null) {
                             provider.removeTransaction(
                                 provider.defaultCardId!, t);
@@ -300,33 +368,29 @@ class _TransactionsPageState extends State<TransactionsPage> {
                                   radius: 28,
                                   backgroundColor: Colors.white,
                                   child: ClipOval(
-                                    child: Image.network(
-                                      t.logoPath!,
-                                      fit: BoxFit.fill,
-                                    ),
-                                  ),
+                                      child: Image.network(t.logoPath!,
+                                          fit: BoxFit.fill)),
                                 )
                               : const CircleAvatar(
                                   backgroundColor: Colors.white,
-                                  child: Icon(
-                                    CupertinoIcons.cart_fill,
-                                    color: Color(0xff181a1e),
-                                  ),
+                                  child: Icon(CupertinoIcons.cart_fill,
+                                      color: Color(0xff181a1e)),
                                 ),
-                          title: Text(
-                            t.place,
-                            style: const TextStyle(
-                              color: Colors.white,
+                          title: Text(t.place,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold)),
+                          subtitle: Text(
+                              "${t.date.day}/${t.date.month}/${t.date.year}",
+                              style: const TextStyle(color: Colors.white54)),
+                          trailing: Text(
+                            '${t.type == 'income' ? '+' : '-'}\$${t.amount.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              color: t.type == 'income'
+                                  ? Colors.green
+                                  : Colors.red,
                               fontWeight: FontWeight.bold,
                             ),
-                          ),
-                          subtitle: Text(
-                            "${t.date.day}/${t.date.month}/${t.date.year}",
-                            style: const TextStyle(color: Colors.white54),
-                          ),
-                          trailing: Text(
-                            '\$${t.amount.toStringAsFixed(2)}',
-                            style: const TextStyle(color: Colors.white54),
                           ),
                         ),
                       );
@@ -335,30 +399,22 @@ class _TransactionsPageState extends State<TransactionsPage> {
           ),
           Container(
             decoration: const BoxDecoration(
-              border: Border(
-                top: BorderSide(width: .5, color: Colors.white54),
-              ),
-            ),
+                border:
+                    Border(top: BorderSide(width: .5, color: Colors.white54))),
             padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Total:',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: Colors.white70,
-                  ),
-                ),
-                Text(
-                  '\$${totalTransactionsAmount.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white70,
-                  ),
-                )
+                const Text('Total:',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: Colors.white70)),
+                Text('\$${totalTransactionsAmount.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white70)),
               ],
             ),
           ),
@@ -368,10 +424,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.green,
         onPressed: () => _openTransactionDialog(),
-        child: const Icon(
-          CupertinoIcons.add,
-          color: Colors.white,
-        ),
+        child: const Icon(CupertinoIcons.add, color: Colors.white),
       ),
       bottomNavigationBar: MyNavBar(currentIndex: 1, email: widget.email),
     );

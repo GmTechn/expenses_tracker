@@ -3,7 +3,7 @@ import 'package:expenses_tracker/components/mybutton.dart';
 import 'package:expenses_tracker/components/mycards.dart';
 import 'package:expenses_tracker/components/mynavbar.dart';
 import 'package:expenses_tracker/components/mytransaction.dart';
-import 'package:expenses_tracker/management/balance_provider.dart';
+import 'package:expenses_tracker/services/balance_provider.dart';
 import 'package:expenses_tracker/management/database.dart';
 import 'package:expenses_tracker/models/cards.dart';
 import 'package:expenses_tracker/models/transactions.dart';

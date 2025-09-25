@@ -3,7 +3,7 @@ import 'package:expenses_tracker/components/mybutton.dart';
 import 'package:expenses_tracker/components/mycards.dart';
 import 'package:expenses_tracker/components/mynavbar.dart';
 import 'package:expenses_tracker/components/mytextfield.dart';
-import 'package:expenses_tracker/management/balance_provider.dart';
+import 'package:expenses_tracker/services/balance_provider.dart';
 import 'package:expenses_tracker/management/database.dart';
 import 'package:expenses_tracker/models/cards.dart';
 import 'package:flutter/cupertino.dart';
@@ -72,7 +72,7 @@ class _MyCardsPageState extends State<MyCardsPage> {
 
   void _cardAddEditDialog({CardModel? card}) {
     final TextEditingController amountController =
-        TextEditingController(text: card?.amount.replaceAll('\$', ''));
+        TextEditingController(text: card != null ? card.amount.toString() : '');
     final TextEditingController cardNumberController =
         TextEditingController(text: card?.cardnumber ?? '');
     final TextEditingController expiryController =
@@ -89,12 +89,15 @@ class _MyCardsPageState extends State<MyCardsPage> {
         return StatefulBuilder(builder: (ctx, setStateDialog) {
           return AlertDialog(
             backgroundColor: const Color(0xff181a1e),
-            title: Text(card == null ? 'Add New Card' : 'Edit Card',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold)),
+            title: Text(
+              card == null ? 'Add New Card' : 'Edit Card',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             content: SingleChildScrollView(
               child: Column(
                 children: [
@@ -138,7 +141,16 @@ class _MyCardsPageState extends State<MyCardsPage> {
                           showDialog(
                             context: context,
                             builder: (_) => AlertDialog(
-                              title: const Text('Pick First Color'),
+                              backgroundColor: const Color(0xff181a1e),
+                              title: const Text(
+                                'Pick First Color',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               content: BlockPicker(
                                   pickerColor: color1,
                                   onColorChanged: (c) =>
@@ -146,7 +158,13 @@ class _MyCardsPageState extends State<MyCardsPage> {
                               actions: [
                                 TextButton(
                                     onPressed: () => Navigator.pop(context),
-                                    child: const Text('Ok')),
+                                    child: const Text(
+                                      'Ok',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    )),
                               ],
                             ),
                           );
@@ -159,7 +177,16 @@ class _MyCardsPageState extends State<MyCardsPage> {
                           showDialog(
                             context: context,
                             builder: (_) => AlertDialog(
-                              title: const Text('Pick Second Color'),
+                              backgroundColor: const Color(0xff181a1e),
+                              title: const Text(
+                                'Pick Second Color',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               content: BlockPicker(
                                   pickerColor: color2,
                                   onColorChanged: (c) =>
@@ -167,7 +194,13 @@ class _MyCardsPageState extends State<MyCardsPage> {
                               actions: [
                                 TextButton(
                                     onPressed: () => Navigator.pop(context),
-                                    child: const Text('Ok')),
+                                    child: const Text(
+                                      'Ok',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    )),
                               ],
                             ),
                           );
@@ -185,11 +218,15 @@ class _MyCardsPageState extends State<MyCardsPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(),
-                      child: const Text("Cancel",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold))),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: const Text(
+                      "Cancel",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                   TextButton(
                     onPressed: () async {
                       if (amountController.text.isNotEmpty &&
@@ -201,8 +238,7 @@ class _MyCardsPageState extends State<MyCardsPage> {
                         final newCard = CardModel(
                           id: card?.id,
                           email: widget.email,
-                          amount:
-                              "\$${amountController.text}", // Initial amount
+                          amount: double.tryParse(amountController.text) ?? 0.0,
                           cardnumber: cardNumberController.text,
                           expirydate: expiryController.text,
                           username: usernameController.text,
@@ -217,8 +253,11 @@ class _MyCardsPageState extends State<MyCardsPage> {
                           await _databaseManager.updateCard(newCard);
                         }
 
-                        await _loadCards();
+                        // ✅ Pop the dialog first
                         if (mounted) Navigator.of(ctx).pop();
+
+                        // ✅ Then reload the cards
+                        await _loadCards();
                       }
                     },
                     child: Text(card == null ? "Add" : "Save",
@@ -250,31 +289,104 @@ class _MyCardsPageState extends State<MyCardsPage> {
               itemCount: _userCards.length,
               itemBuilder: (ctx, i) {
                 final card = _userCards[i];
-                return GestureDetector(
-                  onTap: () => _cardAddEditDialog(card: card),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      MyCards(
-                        amount:
-                            "\$${provider.totalBalance(card.id!).toStringAsFixed(2)}",
-                        cardnumber: card.cardnumber,
-                        expirydate: card.expirydate,
-                        username: card.username,
-                        colorOne: Color(card.colorOne),
-                        colorTwo: Color(card.colorTwo),
+                return Dismissible(
+                  key: ValueKey(card.id),
+                  direction:
+                      DismissDirection.endToStart, // slide vers la gauche
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    color: Colors.red,
+                    child: const Icon(CupertinoIcons.trash_fill,
+                        color: Colors.white),
+                  ),
+                  confirmDismiss: (direction) async {
+                    return await showDialog(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        backgroundColor: const Color(0xff181a1e),
+                        title: Text(
+                          'Confirm',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        content: const Text(
+                          'Do you want to delete this card?',
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                        actions: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                child: const Text(
+                                  'Cancel',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(true),
+                                  child: const Text(
+                                    'Delete',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )),
+                            ],
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      card.isDefault == 1
-                          ? const Icon(CupertinoIcons.check_mark_circled_solid,
-                              color: Colors.green, size: 28)
-                          : MyButton(
-                              textbutton: 'Set as Default',
-                              onTap: () => _setDefaultCard(card),
-                              buttonHeight: 50,
-                              buttonWidth: 180,
-                            ),
-                    ],
+                    );
+                  },
+                  onDismissed: (direction) async {
+                    // Supprimer la carte de la DB et du provider
+                    await _databaseManager.deleteCard(card.id!);
+                    _userCards.removeAt(i);
+                    final provider = context.read<BalanceProvider>();
+                    provider.setCards(_userCards);
+                  },
+                  child: GestureDetector(
+                    onTap: () => _cardAddEditDialog(card: card),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        MyCards(
+                          amount:
+                              "\$${provider.totalBalance(card.id!).toStringAsFixed(2)}",
+                          cardnumber: card.cardnumber,
+                          expirydate: card.expirydate,
+                          username: card.username,
+                          colorOne: Color(card.colorOne),
+                          colorTwo: Color(card.colorTwo),
+                        ),
+                        const SizedBox(height: 8),
+                        card.isDefault == 1
+                            ? const Icon(
+                                CupertinoIcons.check_mark_circled_solid,
+                                color: Colors.green,
+                                size: 28)
+                            : MyButton(
+                                textbutton: 'Set as Default',
+                                onTap: () => _setDefaultCard(card),
+                                buttonHeight: 50,
+                                buttonWidth: 180,
+                              ),
+                      ],
+                    ),
                   ),
                 );
               },

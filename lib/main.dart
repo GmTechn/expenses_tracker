@@ -1,14 +1,15 @@
+import 'package:expenses_tracker/services/balance_provider.dart';
 import 'package:expenses_tracker/management/database.dart';
+import 'package:expenses_tracker/management/sessionmanager.dart';
+import 'package:expenses_tracker/pages/dashboard.dart';
 import 'package:expenses_tracker/pages/login.dart';
 import 'package:expenses_tracker/pages/signup.dart';
 import 'package:expenses_tracker/pages/transactions.dart';
 import 'package:expenses_tracker/services/listofusers.dart';
 import 'package:flutter/material.dart';
-import 'package:expenses_tracker/pages/dashboard.dart';
-import 'package:expenses_tracker/pages/cardspage.dart';
-import 'package:expenses_tracker/pages/profile.dart';
-import 'package:expenses_tracker/management/sessionmanager.dart';
-import 'package:expenses_tracker/management/balance_provider.dart';
+
+import 'pages/cardspage.dart';
+import 'pages/profile.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
@@ -18,7 +19,7 @@ void main() async {
 
   //clearing db
 
-  //await dbManager.clearDatabase();
+  await dbManager.clearDatabase();
 
   // ✅ Initialise toujours la DB avec version:1
 
