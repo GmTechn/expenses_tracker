@@ -1,10 +1,12 @@
 import 'package:expenses_tracker/components/myappbar.dart';
+import 'package:expenses_tracker/components/mybutton.dart';
 import 'package:expenses_tracker/components/mytextfield.dart';
 import 'package:expenses_tracker/models/users.dart';
 import 'package:expenses_tracker/pages/dashboard.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:expenses_tracker/management/database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ListOfUsers extends StatefulWidget {
   const ListOfUsers({super.key});
@@ -81,6 +83,8 @@ class _ListOfUsersState extends State<ListOfUsers> {
           "Delete this user?",
           style: TextStyle(
             color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
           ),
         ),
         content: Text(
@@ -90,24 +94,28 @@ class _ListOfUsersState extends State<ListOfUsers> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(
-                color: Colors.white,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
+                ),
               ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Delete',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),
@@ -137,8 +145,13 @@ class _ListOfUsersState extends State<ListOfUsers> {
           builder: (context, setState) => AlertDialog(
             backgroundColor: Color(0xff181a1e),
             title: const Text(
+              textAlign: TextAlign.center,
               'Edit user info',
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             content: SingleChildScrollView(
               child: Column(
@@ -185,8 +198,8 @@ class _ListOfUsersState extends State<ListOfUsers> {
                     trailingIcon: IconButton(
                       icon: Icon(
                         isPasswordVisible
-                            ? CupertinoIcons.eye_slash_fill
-                            : CupertinoIcons.eye_fill,
+                            ? CupertinoIcons.eye_fill
+                            : CupertinoIcons.eye_slash_fill,
                         color: Colors.white70,
                       ),
                       onPressed: () {
@@ -205,38 +218,56 @@ class _ListOfUsersState extends State<ListOfUsers> {
                       CupertinoIcons.phone_fill,
                       color: Colors.white70,
                     ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
                   ),
                 ],
               ),
             ),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'Cancel',
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      final updatedUser = AppUser(
+                        id: user.id,
+                        fname: newFname.text,
+                        lname: newLname.text,
+                        email: newEmail.text,
+                        password: newPassword.text,
+                        phone: newPhone.text,
+                        photoPath: user.photoPath,
+                      );
+
+                      await _databaseManager
+                          .upsertAppUser(updatedUser as AppUser);
+
+                      Navigator.pop(context);
+                      _loadUsers();
+                    },
+                    child: const Text(
+                      'Save',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  )
+                ],
               ),
-              TextButton(
-                onPressed: () async {
-                  final updatedUser = AppUser(
-                    id: user.id,
-                    fname: newFname.text,
-                    lname: newLname.text,
-                    email: newEmail.text,
-                    password: newPassword.text,
-                    phone: newPhone.text,
-                    photoPath: user.photoPath,
-                  );
-
-                  await _databaseManager.upsertAppUser(updatedUser as AppUser);
-
-                  Navigator.pop(context);
-                  _loadUsers();
-                },
-                child: const Text('Save',
-                    style: TextStyle(
-                        color: Colors.green, fontWeight: FontWeight.bold)),
-              )
             ],
           ),
         );
@@ -254,35 +285,26 @@ class _ListOfUsersState extends State<ListOfUsers> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xff181a1e),
-      appBar: AppBar(
-        leading: IconButton(
-            onPressed: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => Dashboard(email: '')));
-            },
-            icon: Icon(Icons.reset_tv_rounded)),
-        title: Text('Users'),
-      )
-
-      // myAppBar(context, 'U S E R S',
-      // ),
-      ,
+      appBar: myAppBar(
+        context,
+        'U S E R S',
+      ),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: TextField(
-              cursorColor: const Color(0xff050c20),
+              style: TextStyle(color: Colors.white),
+              cursorColor: Colors.white70,
               controller: searchController,
               onChanged: _searchUsers,
               decoration: InputDecoration(
                 focusedBorder: const OutlineInputBorder(
-                    borderSide:
-                        BorderSide(color: Color(0xff050c20), width: 1.5)),
-                prefixIcon: const Icon(Icons.search, color: Color(0xff050c20)),
+                    borderSide: BorderSide(color: Colors.grey, width: 1.5)),
+                prefixIcon:
+                    const Icon(CupertinoIcons.search, color: Colors.white),
                 hintText: "Search users...",
+                hintStyle: TextStyle(color: Colors.white54),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(color: Color(0xff050c20))),
@@ -295,15 +317,23 @@ class _ListOfUsersState extends State<ListOfUsers> {
               itemBuilder: (context, index) {
                 final user = _filteredUsers[index];
                 return Padding(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(8.0),
                   child: Card(
-                    elevation: 1.0,
-                    shadowColor: Colors.white24,
-                    color: Color.fromARGB(255, 29, 32, 37),
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    elevation: 5,
+                    color: Color(0xff181a1e),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: Colors.white70, width: .5)),
+                    margin: const EdgeInsets.symmetric(horizontal: 14),
                     child: ListTile(
-                      title: Text('${user.fname} ${user.lname}'),
-                      subtitle: Text(user.email ?? ''),
+                      title: Text(
+                        '${user.fname} ${user.lname}',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      subtitle: Text(
+                        user.email ?? '',
+                        style: TextStyle(color: Colors.white70),
+                      ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -311,13 +341,13 @@ class _ListOfUsersState extends State<ListOfUsers> {
                               onPressed: () => _deleteUser(user),
                               icon: const Icon(
                                 CupertinoIcons.delete_solid,
-                                color: Colors.white24,
+                                color: Colors.white70,
                               )),
                           IconButton(
                               onPressed: () => _editUser(user),
                               icon: const Icon(
                                 CupertinoIcons.pencil,
-                                color: Colors.white24,
+                                color: Colors.white70,
                               )),
                         ],
                       ),
@@ -326,7 +356,22 @@ class _ListOfUsersState extends State<ListOfUsers> {
                 );
               },
             ),
-          )
+          ),
+          MyButton(
+              textbutton: 'Dashboard',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Dashboard(email: ''),
+                  ),
+                );
+              },
+              buttonHeight: 40,
+              buttonWidth: 150),
+          SizedBox(
+            height: 50,
+          ),
         ],
       ),
     );
