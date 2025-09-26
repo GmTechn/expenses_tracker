@@ -36,7 +36,8 @@ class BalanceProvider extends ChangeNotifier {
 
   void addTransaction(int cardId, TransactionModel transaction) {
     _cardTransactions[cardId] ??= [];
-    _cardTransactions[cardId]!.add(transaction);
+    // Ajouter au début de la liste pour que ça apparaisse en haut
+    _cardTransactions[cardId]!.insert(0, transaction);
     notifyListeners();
   }
 

@@ -25,42 +25,42 @@ class _TransactionsPageState extends State<TransactionsPage> {
   String? _selectedBrand;
 
   final Map<String, String> brandLogos = {
+    'Amazon': 'https://wallpapercave.com/wp/wp7771222.png',
     'Apple':
         'https://w7.pngwing.com/pngs/589/546/png-transparent-apple-logo-new-york-city-brand-computer-apple-company-computer-logo.png',
-    'Google':
-        'https://4kwallpapers.com/images/wallpapers/google-logo-5k-8k-7680x4320-11298.png',
-    'Zara': 'https://logos-world.net/wp-content/uploads/2020/05/Zara-Logo.png',
-    'H&M':
-        'https://e7.pngegg.com/pngimages/43/204/png-clipart-logo-h-m-brand-clothing-logo-hm.png',
-    'Shein': 'https://1000logos.net/wp-content/uploads/2021/05/Shein-logo.png',
-    'Walmart':
-        'https://www.per-accurate.com/wp-content/uploads/2023/08/walmart-logo-24.jpg',
-    'Loblaws':
-        'https://cdn.freebiesupply.com/logos/large/2x/loblaws-logo-png-transparent.png',
-    'Nike':
-        'https://www.muraldecal.com/en/img/asfs364-jpg/folder/products-listado-merchanthover/stickers-nike-on-your-logo.jpg',
-    'Amazon': 'https://wallpapercave.com/wp/wp7771222.png',
-    'Samsung': 'https://www.pc-canada.com/dd2/img/item/B-500x500/-/Samsung.jpg',
-    'Microsoft':
-        'https://static.vecteezy.com/system/resources/previews/014/018/578/non_2x/microsoft-logo-on-transparent-background-free-vector.jpg',
-    'Facebook':
-        'https://www.citypng.com/public/uploads/preview/round-blue-circle-contains-f-letter-facebook-logo-701751695134712lb9coc4kea.png',
-    'Twitter':
-        'https://upload.wikimedia.org/wikipedia/commons/7/71/Twitter_Logo_Blue_%282%29.png',
-    'Instagram':
-        'https://img.freepik.com/free-vector/instagram-icon_1057-2227.jpg?semt=ais_hybrid&w=740&q=80',
-    'TikTok': 'https://purepng.com/public/uploads/large/tik-tok-logo-6fh.png',
-    'Spotify':
-        'https://www.freepnglogos.com/uploads/spotify-logo-png/spotify-logo-spotify-symbol-3.png',
-    'Netflix': 'https://images3.alphacoders.com/115/1152293.png',
-    'Paypal': 'https://static.cdnlogo.com/logos/p/9/paypal.png',
-    'Interact': 'https://download.logo.wine/logo/Interac/Interac-Logo.wine.png',
-    'Wise':
-        'https://d21buns5ku92am.cloudfront.net/69645/images/470455-Frame%2039263-cdfad6-medium-1677657684.png',
     'Direct Deposit':
         'https://www.shutterstock.com/image-vector/building-vector-icon-column-bank-600nw-1930635143.jpg',
+    'Facebook':
+        'https://www.citypng.com/public/uploads/preview/round-blue-circle-contains-f-letter-facebook-logo-701751695134712lb9coc4kea.png',
+    'Google':
+        'https://4kwallpapers.com/images/wallpapers/google-logo-5k-8k-7680x4320-11298.png',
+    'H&M':
+        'https://e7.pngegg.com/pngimages/43/204/png-clipart-logo-h-m-brand-clothing-logo-hm.png',
+    'Instagram':
+        'https://img.freepik.com/free-vector/instagram-icon_1057-2227.jpg?semt=ais_hybrid&w=740&q=80',
+    'Interact': 'https://download.logo.wine/logo/Interac/Interac-Logo.wine.png',
+    'Loblaws':
+        'https://cdn.freebiesupply.com/logos/large/2x/loblaws-logo-png-transparent.png',
+    'Microsoft':
+        'https://static.vecteezy.com/system/resources/previews/014/018/578/non_2x/microsoft-logo-on-transparent-background-free-vector.jpg',
     'MoneyGram':
         'https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/MoneyGram_Logo.svg/2560px-MoneyGram_Logo.svg.png',
+    'Netflix': 'https://images3.alphacoders.com/115/1152293.png',
+    'Nike':
+        'https://www.muraldecal.com/en/img/asfs364-jpg/folder/products-listado-merchanthover/stickers-nike-on-your-logo.jpg',
+    'Paypal': 'https://static.cdnlogo.com/logos/p/9/paypal.png',
+    'Samsung': 'https://www.pc-canada.com/dd2/img/item/B-500x500/-/Samsung.jpg',
+    'Shein': 'https://1000logos.net/wp-content/uploads/2021/05/Shein-logo.png',
+    'Spotify':
+        'https://www.freepnglogos.com/uploads/spotify-logo-png/spotify-logo-spotify-symbol-3.png',
+    'TikTok': 'https://purepng.com/public/uploads/large/tik-tok-logo-6fh.png',
+    'Twitter':
+        'https://upload.wikimedia.org/wikipedia/commons/7/71/Twitter_Logo_Blue_%282%29.png',
+    'Walmart':
+        'https://www.per-accurate.com/wp-content/uploads/2023/08/walmart-logo-24.jpg',
+    'Wise':
+        'https://d21buns5ku92am.cloudfront.net/69645/images/470455-Frame%2039263-cdfad6-medium-1677657684.png',
+    'Zara': 'https://logos-world.net/wp-content/uploads/2020/05/Zara-Logo.png',
   };
 
   List<String> get sortedBrands => brandLogos.keys.toList()..sort();
@@ -81,8 +81,15 @@ class _TransactionsPageState extends State<TransactionsPage> {
   }
 
   double get totalTransactionsAmount {
-    double total = 0;
-    for (var t in _transactions) {
+    final provider = context.read<BalanceProvider>();
+    final cardId = provider.defaultCardId;
+    if (cardId == null) return 0.0;
+
+    final transactions = provider.transactionsForCard(cardId);
+
+    double total = 0.0;
+    for (var t in transactions) {
+      // On ajoute le montant si income, sinon on soustrait (expense)
       total += t.type.toLowerCase() == 'income' ? t.amount : -t.amount;
     }
     return total;
@@ -255,35 +262,51 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     if (_formKey.currentState!.validate()) {
                       final place = _placeController.text;
                       final amountValue = double.parse(_amountController.text);
-                      final isIncome = _selectedType?.toLowerCase() == 'income';
+                      final isIncome = _selectedType == 'Income';
+                      final amount = isIncome ? amountValue : -amountValue;
                       final logoPath = _selectedBrand != null
                           ? brandLogos[_selectedBrand!]
                           : null;
 
+                      final provider = context.read<BalanceProvider>();
+                      final defaultCardId = provider.defaultCardId;
+
+                      if (defaultCardId == null) {
+                        // Optionnel : message d'erreur si aucune carte par défaut
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Please set a default card first')),
+                        );
+                        return;
+                      }
+
                       TransactionModel transactionModel;
+
                       if (transaction != null) {
+                        // Modification d'une transaction existante
                         transactionModel = transaction.copyWith(
                           place: place,
-                          amount: amountValue,
+                          amount: amount,
                           logoPath: logoPath,
                           type: isIncome ? 'income' : 'expense',
                         );
+                        provider.updateTransaction(
+                            defaultCardId, transactionModel);
                         await dbManager.updateTransaction(transactionModel);
-                        final index = _transactions
-                            .indexWhere((t) => t.id == transaction.id);
-                        setState(() => _transactions[index] = transactionModel);
                       } else {
+                        // Nouvelle transaction
                         transactionModel = TransactionModel(
                           email: widget.email,
                           place: place,
-                          amount: amountValue,
+                          amount: amount,
                           date: DateTime.now(),
                           logoPath: logoPath,
-                          cardId: 0,
+                          cardId: defaultCardId,
                           type: isIncome ? 'income' : 'expense',
                         );
+                        provider.addTransaction(
+                            defaultCardId, transactionModel);
                         await dbManager.insertTransaction(transactionModel);
-                        _loadTransactions();
                       }
 
                       Navigator.pop(context);
@@ -308,6 +331,11 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<BalanceProvider>();
+    final _transactions = provider.defaultCardId != null
+        ? provider.transactionsForCard(provider.defaultCardId!)
+        : [];
+
     return Scaffold(
       backgroundColor: const Color(0xff181a1e),
       appBar: AppBar(
@@ -327,7 +355,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     itemCount: _transactions.length,
                     itemBuilder: (ctx, index) {
                       final t = _transactions[index];
-                      final isIncome = t.type.toLowerCase() == 'income';
                       return Dismissible(
                         key: ValueKey(t.id),
                         background: Container(
@@ -364,11 +391,14 @@ class _TransactionsPageState extends State<TransactionsPage> {
                               "${t.date.day}/${t.date.month}/${t.date.year}",
                               style: const TextStyle(color: Colors.white54)),
                           trailing: Text(
-                              '${isIncome ? '+' : '-'}\$${t.amount.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                color: isIncome ? Colors.green : Colors.red,
-                                fontWeight: FontWeight.normal,
-                              )),
+                            t.amount >= 0
+                                ? "+\$${t.amount.toStringAsFixed(2)}"
+                                : "-\$${t.amount.abs().toStringAsFixed(2)}",
+                            style: TextStyle(
+                                color:
+                                    t.amount >= 0 ? Colors.green : Colors.red,
+                                fontWeight: FontWeight.bold),
+                          ),
                         ),
                       );
                     },

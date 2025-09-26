@@ -229,8 +229,19 @@ class _ProfilePageState extends State<ProfilePage> {
         showDialog(
           context: context,
           builder: (_) => const AlertDialog(
-            title: Text('Success'),
-            content: Text('Your changes have been saved.'),
+            backgroundColor: Color(0xff181a1e),
+            title: Text(
+              'Success',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            content: Text(
+              'Your changes have been saved.',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         );
       }
@@ -248,15 +259,37 @@ class _ProfilePageState extends State<ProfilePage> {
     final doCancel = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Discard changes?'),
-        content: const Text('Are you sure you want to discard your edits?'),
+        backgroundColor: const Color(0xff181a1e),
+        title: const Text(
+          'Discard changes?',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: const Text(
+          'Are you sure you want to discard your edits?',
+          style: TextStyle(color: Colors.white),
+        ),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('No')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Yes')),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text(
+                    'No',
+                    style: TextStyle(color: Colors.white),
+                  )),
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text(
+                    'Yes',
+                    style: TextStyle(color: Colors.white),
+                  )),
+            ],
+          ),
         ],
       ),
     );

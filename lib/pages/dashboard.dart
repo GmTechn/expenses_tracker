@@ -25,12 +25,22 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
+  //database instance
   final DatabaseManager _databaseManager = DatabaseManager();
+
+  //app user instance
   AppUser? _currentUser;
+
+  //card model instance
   CardModel? _defaultCard;
+
+  //list of recent transactions
   List<TransactionModel> _recentTransactions = [];
+
+  //profile photo
   String? _savedPhotoPath;
 
+//initializing state
   @override
   void initState() {
     super.initState();
@@ -38,6 +48,7 @@ class _DashboardState extends State<Dashboard> {
     _loadAllData();
   }
 
+//displaying photo picture
   Future<void> _loadSavedPhoto() async {
     final prefs = await SharedPreferences.getInstance();
     final path = prefs.getString('profile_photo_${widget.email}');
@@ -89,15 +100,26 @@ class _DashboardState extends State<Dashboard> {
     }
   }
 
-  double get totalIncome => _recentTransactions
-      .where((t) => t.amount >= 0)
-      .fold(0, (sum, t) => sum + t.amount);
+  // replace your totalIncome / totalExpense getters with
+  double get totalIncome {
+    final provider = context.read<BalanceProvider>();
+    final defaultCardId = provider.defaultCardId;
+    if (defaultCardId == null) return 0.0;
+    final transactions = provider.transactionsForCard(defaultCardId);
+    return transactions
+        .where((t) => t.amount >= 0)
+        .fold(0.0, (sum, t) => sum + t.amount);
+  }
 
-  double get totalExpense => _recentTransactions
-      .where((t) => t.amount < 0)
-      .fold(0, (sum, t) => sum + t.amount.abs());
-
-  double get currentBalance => context.watch<BalanceProvider>().currentBalance;
+  double get totalExpense {
+    final provider = context.read<BalanceProvider>();
+    final defaultCardId = provider.defaultCardId;
+    if (defaultCardId == null) return 0.0;
+    final transactions = provider.transactionsForCard(defaultCardId);
+    return transactions
+        .where((t) => t.amount < 0)
+        .fold(0.0, (sum, t) => sum + t.amount.abs());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -294,16 +316,25 @@ class _DashboardState extends State<Dashboard> {
                       color: Colors.white,
                       fontSize: 18)),
               const SizedBox(height: 10),
+              // Ici on utilise toujours le provider pour recent transactions et totaux
               Consumer<BalanceProvider>(
                 builder: (context, provider, _) {
-                  if (_defaultCard == null) return const SizedBox();
+                  if (provider.defaultCardId == null) return const SizedBox();
                   final transactions =
-                      provider.transactionsForCard(_defaultCard!.id!);
+                      provider.transactionsForCard(provider.defaultCardId!);
+
+                  transactions
+                      .where((t) => t.amount >= 0)
+                      .fold(0.0, (sum, t) => sum + t.amount);
+                  transactions
+                      .where((t) => t.amount < 0)
+                      .fold(0.0, (sum, t) => sum + t.amount.abs());
+
                   return Column(
                     children: transactions.take(5).map((t) {
                       return Mytransaction(
                         logo: t.logoPath ?? 'assets/images/apple.png',
-                        title: t.place ?? "",
+                        title: t.place,
                         date: "${t.date.day}/${t.date.month}/${t.date.year}",
                         amount: t.amount,
                       );
