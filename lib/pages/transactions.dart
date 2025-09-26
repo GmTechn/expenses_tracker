@@ -1,5 +1,7 @@
+import 'package:expenses_tracker/models/notifications.dart';
 import 'package:expenses_tracker/models/transactions.dart';
 import 'package:expenses_tracker/services/balance_provider.dart';
+import 'package:expenses_tracker/services/notification_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:expenses_tracker/components/mynavbar.dart';
@@ -307,6 +309,17 @@ class _TransactionsPageState extends State<TransactionsPage> {
                         provider.addTransaction(
                             defaultCardId, transactionModel);
                         await dbManager.insertTransaction(transactionModel);
+                        final notifProvider =
+                            context.read<NotificationProvider>();
+                        notifProvider.addNotification(
+                          AppNotification(
+                            id: DateTime.now().toIso8601String(),
+                            title: isIncome ? 'Income Added' : 'Expense Added',
+                            description:
+                                '${_placeController.text} - \$${_amountController.text}',
+                            date: DateTime.now(),
+                          ),
+                        );
                       }
 
                       Navigator.pop(context);

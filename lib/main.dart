@@ -1,3 +1,4 @@
+import 'package:expenses_tracker/pages/notificationspage.dart';
 import 'package:expenses_tracker/services/balance_provider.dart';
 import 'package:expenses_tracker/management/database.dart';
 import 'package:expenses_tracker/management/sessionmanager.dart';
@@ -6,6 +7,7 @@ import 'package:expenses_tracker/pages/login.dart';
 import 'package:expenses_tracker/pages/signup.dart';
 import 'package:expenses_tracker/pages/transactions.dart';
 import 'package:expenses_tracker/services/listofusers.dart';
+import 'package:expenses_tracker/services/notification_provider.dart';
 import 'package:flutter/material.dart';
 
 import 'pages/cardspage.dart';
@@ -19,7 +21,7 @@ void main() async {
 
   //clearing db
 
-  await dbManager.clearDatabase();
+  //await dbManager.clearDatabase();
 
   // ✅ Initialise toujours la DB avec version:1
 
@@ -29,9 +31,16 @@ void main() async {
   final currentUserEmail = await SessionManager.getCurrentUser();
 
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => BalanceProvider(),
-      child: MyApp(initialEmail: currentUserEmail),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => BalanceProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => NotificationProvider(),
+        ),
+      ],
+      child: const MyApp(),
     ),
   );
 }
@@ -52,9 +61,7 @@ class MyApp extends StatelessWidget {
       /// ✅ Sinon → SignUp (car DB est vide au lancement)
       home: initialEmail != null && initialEmail!.isNotEmpty
           ? Dashboard(email: initialEmail!)
-          : LoginPage(
-              email: '',
-            ),
+          : LoginPage(email: ''),
 
       onGenerateRoute: (settings) {
         final args = settings.arguments as Map<String, dynamic>?;

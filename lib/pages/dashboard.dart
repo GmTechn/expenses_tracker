@@ -3,6 +3,7 @@ import 'package:expenses_tracker/components/mybutton.dart';
 import 'package:expenses_tracker/components/mycards.dart';
 import 'package:expenses_tracker/components/mynavbar.dart';
 import 'package:expenses_tracker/components/mytransaction.dart';
+import 'package:expenses_tracker/pages/notificationspage.dart';
 import 'package:expenses_tracker/services/balance_provider.dart';
 import 'package:expenses_tracker/management/database.dart';
 import 'package:expenses_tracker/models/cards.dart';
@@ -11,6 +12,7 @@ import 'package:expenses_tracker/models/users.dart';
 import 'package:expenses_tracker/pages/cardspage.dart';
 import 'package:expenses_tracker/pages/profile.dart';
 import 'package:expenses_tracker/services/listofusers.dart';
+import 'package:expenses_tracker/services/notification_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -196,28 +198,54 @@ class _DashboardState extends State<Dashboard> {
                         ],
                       ),
                     ),
-                    Stack(
-                      children: [
-                        IconButton(
-                          onPressed: () {},
-                          icon: const Icon(CupertinoIcons.bell_fill,
-                              size: 28, color: Colors.white),
-                        ),
-                        Positioned(
-                          right: 10,
-                          top: 8,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                                color: Colors.red, shape: BoxShape.circle),
-                            child: const Text('7',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 10)),
-                          ),
-                        ),
-                      ],
+                    Consumer<NotificationProvider>(
+                      builder: (context, notifProvider, _) {
+                        return Stack(
+                          children: [
+                            IconButton(
+                              icon: const Icon(CupertinoIcons.bell_fill,
+                                  size: 28, color: Colors.white),
+                              onPressed: () async {
+                                // Utiliser le context parent
+                                final parentContext = this
+                                    .context; // context du State, sûr d’avoir accès au Provider
+                                await Navigator.of(parentContext).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const NotificationsPage(),
+                                  ),
+                                );
+
+                                // Marquer toutes les notifications comme lues après le retour
+                                if (mounted) {
+                                  parentContext
+                                      .read<NotificationProvider>()
+                                      .markAllAsRead();
+                                }
+                              },
+                            ),
+                            if (notifProvider.unreadCount > 0)
+                              Positioned(
+                                right: 8,
+                                top: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    '${notifProvider.unreadCount}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     )
                   ],
                 ),
