@@ -360,63 +360,76 @@ class _TransactionsPageState extends State<TransactionsPage> {
       body: Column(
         children: [
           Expanded(
-            child: _transactions.isEmpty
-                ? const Center(
-                    child: Text("No transactions yet",
-                        style: TextStyle(color: Colors.white70)))
-                : ListView.builder(
-                    itemCount: _transactions.length,
-                    itemBuilder: (ctx, index) {
-                      final t = _transactions[index];
-                      return Dismissible(
-                        key: ValueKey(t.id),
-                        background: Container(
-                            color: Colors.red,
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child:
-                                const Icon(Icons.delete, color: Colors.white)),
-                        direction: DismissDirection.endToStart,
-                        onDismissed: (direction) async {
-                          await dbManager.deleteTransaction(t.id!);
-                          _loadTransactions();
-                        },
-                        child: ListTile(
-                          onTap: () => _openTransactionDialog(transaction: t),
-                          leading: t.logoPath != null && t.logoPath!.isNotEmpty
-                              ? CircleAvatar(
-                                  radius: 28,
-                                  backgroundColor: Colors.white,
-                                  child: ClipOval(
-                                      child: Image.network(t.logoPath!,
-                                          fit: BoxFit.fill)),
-                                )
-                              : const CircleAvatar(
-                                  backgroundColor: Colors.white,
-                                  child: Icon(CupertinoIcons.cart_fill,
-                                      color: Color(0xff181a1e)),
-                                ),
-                          title: Text(t.place,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold)),
-                          subtitle: Text(
-                              "${t.date.day}/${t.date.month}/${t.date.year}",
-                              style: const TextStyle(color: Colors.white54)),
-                          trailing: Text(
-                            t.amount >= 0
-                                ? "+\$${t.amount.toStringAsFixed(2)}"
-                                : "-\$${t.amount.abs().toStringAsFixed(2)}",
-                            style: TextStyle(
-                                color:
-                                    t.amount >= 0 ? Colors.green : Colors.red,
-                                fontWeight: FontWeight.bold),
+              child: _transactions.isEmpty
+                  ? const Center(
+                      child: Text("No transactions yet",
+                          style: TextStyle(color: Colors.white70)))
+                  : ListView.builder(
+                      itemCount: _transactions.length,
+                      itemBuilder: (context, index) {
+                        final t = _transactions[index];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 6), // espace entre transactions
+                          child: Dismissible(
+                            key: ValueKey(t.id),
+                            background: Container(
+                              color: Colors.red,
+                              alignment: Alignment.centerRight,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                              child:
+                                  const Icon(Icons.delete, color: Colors.white),
+                            ),
+                            direction: DismissDirection.endToStart,
+                            onDismissed: (direction) async {
+                              await dbManager.deleteTransaction(t.id!);
+                              _loadTransactions();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Transaction deleted!')),
+                              );
+                            },
+                            child: ListTile(
+                              onTap: () =>
+                                  _openTransactionDialog(transaction: t),
+                              leading:
+                                  t.logoPath != null && t.logoPath!.isNotEmpty
+                                      ? CircleAvatar(
+                                          radius: 28,
+                                          backgroundColor: Colors.white,
+                                          child: ClipOval(
+                                              child: Image.network(t.logoPath!,
+                                                  fit: BoxFit.fill)),
+                                        )
+                                      : const CircleAvatar(
+                                          backgroundColor: Colors.white,
+                                          child: Icon(CupertinoIcons.cart_fill,
+                                              color: Color(0xff181a1e)),
+                                        ),
+                              title: Text(t.place,
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold)),
+                              subtitle: Text(
+                                  "${t.date.day}/${t.date.month}/${t.date.year}",
+                                  style:
+                                      const TextStyle(color: Colors.white54)),
+                              trailing: Text(
+                                t.amount >= 0
+                                    ? "+\$${t.amount.toStringAsFixed(2)}"
+                                    : "-\$${t.amount.abs().toStringAsFixed(2)}",
+                                style: TextStyle(
+                                    color: t.amount >= 0
+                                        ? Colors.green
+                                        : Colors.red,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
+                        );
+                      },
+                    )),
           Container(
             decoration: const BoxDecoration(
                 border:

@@ -285,9 +285,17 @@ class _ListOfUsersState extends State<ListOfUsers> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xff181a1e),
-      appBar: myAppBar(
-        context,
-        'U S E R S',
+      appBar: AppBar(
+        backgroundColor: const Color(0xff181a1e),
+        title: const Text(
+          'Users',
+          style: TextStyle(color: Colors.white),
+        ),
+        // Ici on peut juste changer la couleur du leading par défaut
+        iconTheme: const IconThemeData(
+          color: Colors.white, // ← couleur de l'icône "back"
+        ),
+        // Si tu veux explicitement un bouton retour personnalisé, tu peux le faire comme ça
       ),
       body: Column(
         children: [

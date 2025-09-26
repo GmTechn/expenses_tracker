@@ -27,40 +27,50 @@ class NotificationsPage extends StatelessWidget {
           color: Colors.white, // ← couleur de l'icône "back"
         ),
         // Si tu veux explicitement un bouton retour personnalisé, tu peux le faire comme ça
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
       body: Column(
         children: [
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            child: ListView.builder(
+              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
               itemCount: notifications.length,
-              separatorBuilder: (context, index) =>
-                  const SizedBox(height: 8), // ← espace entre chaque tile
               itemBuilder: (context, index) {
                 final n = notifications[index];
-                return ListTile(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Dismissible(
+                    key: ValueKey(n.id),
+                    background: Container(
+                      color: Colors.red,
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: const Icon(Icons.delete, color: Colors.white),
+                    ),
+                    direction: DismissDirection.endToStart,
+                    onDismissed: (direction) {
+                      notifProvider.deleteNotification(
+                          n.id); // à créer dans ton provider
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Notification deleted!')),
+                      );
+                    },
+                    child: ListTile(
+                      tileColor:
+                          n.read ? const Color(0xff383a44) : Colors.green,
+                      title: Text(n.title,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold)),
+                      subtitle: Text(n.description,
+                          style: const TextStyle(color: Colors.white70)),
+                      trailing: Text(
+                        "${n.date.hour}:${n.date.minute.toString().padLeft(2, '0')}",
+                        style: const TextStyle(
+                            color: Colors.white54, fontSize: 12),
+                      ),
+                      onTap: () => notifProvider.markAsRead(n.id),
+                    ),
                   ),
-                  tileColor: n.read ? const Color(0xff50565e) : Colors.green,
-                  title: Text(
-                    n.title,
-                    style: const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    n.description,
-                    style: const TextStyle(color: Colors.white70),
-                  ),
-                  trailing: Text(
-                    "${n.date.hour}:${n.date.minute.toString().padLeft(2, '0')}",
-                    style: const TextStyle(color: Colors.white54, fontSize: 12),
-                  ),
-                  onTap: () => notifProvider.markAsRead(n.id),
                 );
               },
             ),

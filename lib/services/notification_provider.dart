@@ -26,4 +26,9 @@ class NotificationProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  void deleteNotification(String id) {
+    _notifications.removeWhere((n) => n.id == id);
+    notifyListeners();
+  }
 }
