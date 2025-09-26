@@ -53,5 +53,17 @@ class CardModel {
     );
   }
 
-  static empty() {}
+  static CardModel empty() {
+    return CardModel(
+      id: -1,
+      email: '',
+      amount: 0.0,
+      cardnumber: '',
+      expirydate: '',
+      username: '',
+      colorOne: 0,
+      colorTwo: 0,
+      isDefault: 0,
+    );
+  }
 }

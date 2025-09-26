@@ -1,5 +1,5 @@
-import 'package:expenses_tracker/services/balance_provider.dart';
 import 'package:expenses_tracker/models/transactions.dart';
+import 'package:expenses_tracker/services/balance_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:expenses_tracker/components/mynavbar.dart';
@@ -23,7 +23,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
   final _placeController = TextEditingController();
   final _amountController = TextEditingController();
   String? _selectedBrand;
-  String? _selectedType;
 
   final Map<String, String> brandLogos = {
     'Apple':
@@ -31,11 +30,9 @@ class _TransactionsPageState extends State<TransactionsPage> {
     'Google':
         'https://4kwallpapers.com/images/wallpapers/google-logo-5k-8k-7680x4320-11298.png',
     'Zara': 'https://logos-world.net/wp-content/uploads/2020/05/Zara-Logo.png',
-    // ton lien qui fonctionnait
     'H&M':
         'https://e7.pngegg.com/pngimages/43/204/png-clipart-logo-h-m-brand-clothing-logo-hm.png',
-    'Shein':
-        'https://1000logos.net/wp-content/uploads/2021/05/Shein-logo.png', // ton lien qui fonctionnait
+    'Shein': 'https://1000logos.net/wp-content/uploads/2021/05/Shein-logo.png',
     'Walmart':
         'https://www.per-accurate.com/wp-content/uploads/2023/08/walmart-logo-24.jpg',
     'Loblaws':
@@ -76,91 +73,33 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
   Future<void> _loadTransactions() async {
     final data = await dbManager.getTransactions(widget.email);
+    data.sort((a, b) => b.date.compareTo(a.date));
     setState(() {
       _transactions.clear();
       _transactions.addAll(data);
     });
-
-    final provider = context.read<BalanceProvider>();
-    if (provider.defaultCardId != null) {
-      provider.setTransactionsForCard(provider.defaultCardId!, _transactions);
-    }
   }
 
   double get totalTransactionsAmount {
     double total = 0;
     for (var t in _transactions) {
-      if (t.type == 'income') {
-        total += t.amount;
-      } else {
-        total -= t.amount;
-      }
+      total += t.type.toLowerCase() == 'income' ? t.amount : -t.amount;
     }
     return total;
   }
 
-  Future<void> _addOrUpdateTransaction({TransactionModel? existing}) async {
-    if (_formKey.currentState!.validate()) {
-      final place = _placeController.text;
-      final amount = double.parse(_amountController.text);
-      final logoPath =
-          _selectedBrand != null ? brandLogos[_selectedBrand!] : null;
-      final type = _selectedType!;
-
-      final provider = context.read<BalanceProvider>();
-      if (provider.defaultCardId == null) return;
-
-      TransactionModel transaction;
-      if (existing != null) {
-        transaction = existing.copyWith(
-          place: place,
-          amount: amount,
-          logoPath: logoPath,
-          type: type,
-          cardId: provider.defaultCardId!,
-        );
-        await dbManager.updateTransaction(transaction);
-
-        final index = _transactions.indexWhere((t) => t.id == existing.id);
-        setState(() => _transactions[index] = transaction);
-
-        provider.updateTransaction(provider.defaultCardId!, transaction);
-      } else {
-        transaction = TransactionModel(
-          email: widget.email,
-          place: place,
-          amount: amount,
-          date: DateTime.now(),
-          logoPath: logoPath,
-          type: type,
-          cardId: provider.defaultCardId!,
-        );
-        await dbManager.insertTransaction(transaction);
-
-        setState(() => _transactions.add(transaction));
-        provider.addTransaction(provider.defaultCardId!, transaction);
-      }
-
-      _placeController.clear();
-      _amountController.clear();
-      _selectedBrand = null;
-      _selectedType = null;
-
-      if (mounted) Navigator.of(context).pop();
-    }
-  }
-
   void _openTransactionDialog({TransactionModel? transaction}) {
+    String? _selectedType = transaction != null
+        ? (transaction.type.toLowerCase() == 'income' ? 'Income' : 'Expense')
+        : null;
+
     if (transaction != null) {
       _placeController.text = transaction.place;
       _amountController.text = transaction.amount.toString();
       _selectedBrand = brandLogos.entries
-          .firstWhere(
-            (entry) => entry.value == transaction.logoPath,
-            orElse: () => const MapEntry('', ''),
-          )
+          .firstWhere((entry) => entry.value == transaction.logoPath,
+              orElse: () => const MapEntry('', ''))
           .key;
-      _selectedType = transaction.type;
     }
 
     showDialog(
@@ -172,10 +111,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
             transaction == null ? 'Add Transaction' : 'Edit Transaction',
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
+                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
           ),
           content: Form(
             key: _formKey,
@@ -189,13 +125,13 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     hintText: 'Merchant',
                     obscureText: false,
                     validator: (value) =>
-                        value!.isEmpty ? "Enter a location" : null,
+                        value!.isEmpty ? "Enter a place" : null,
                   ),
                   const SizedBox(height: 10),
                   MyTextFormField(
                     leadingIcon: const Icon(CupertinoIcons.money_dollar),
                     controller: _amountController,
-                    hintText: "Amount",
+                    hintText: 'Amount',
                     obscureText: false,
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
@@ -221,13 +157,15 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     decoration: InputDecoration(
                       fillColor: const Color.fromARGB(255, 40, 43, 50),
                       filled: true,
-                      prefixIcon:
-                          const Icon(CupertinoIcons.tag, color: Colors.white),
+                      prefixIcon: Icon(CupertinoIcons.tag),
+                      // iconColor: Colors.,
+                      prefixIconColor: Colors.white,
                       hintText: 'Select Brand',
                       hintStyle: const TextStyle(color: Colors.white54),
                       enabledBorder: OutlineInputBorder(
                         borderSide: const BorderSide(
-                            color: Color.fromARGB(255, 40, 43, 50)),
+                          color: Color.fromARGB(255, 40, 43, 50),
+                        ),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -249,16 +187,21 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     value: _selectedType,
                     items: const [
                       DropdownMenuItem(
-                          value: 'income',
-                          child: Text('Income',
-                              style: TextStyle(color: Colors.white))),
+                        value: 'Income',
+                        child: Text(
+                          'Income',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
                       DropdownMenuItem(
-                          value: 'expense',
-                          child: Text('Expense',
-                              style: TextStyle(color: Colors.white))),
+                        value: 'Expense',
+                        child: Text(
+                          'Expense',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
                     ],
-                    onChanged: (value) =>
-                        setState(() => _selectedType = value!),
+                    onChanged: (value) => setState(() => _selectedType = value),
                     validator: (value) =>
                         value == null ? 'Select a type' : null,
                     style: const TextStyle(color: Colors.white),
@@ -266,13 +209,15 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     decoration: InputDecoration(
                       fillColor: const Color.fromARGB(255, 40, 43, 50),
                       filled: true,
-                      prefixIcon: const Icon(CupertinoIcons.money_dollar,
-                          color: Colors.white),
-                      hintText: 'Select Type',
+                      prefixIcon: Icon(CupertinoIcons.arrow_2_circlepath),
+                      // iconColor: Colors.,
+                      prefixIconColor: Colors.white,
+                      hintText: 'Select type',
                       hintStyle: const TextStyle(color: Colors.white54),
                       enabledBorder: OutlineInputBorder(
                         borderSide: const BorderSide(
-                            color: Color.fromARGB(255, 40, 43, 50)),
+                          color: Color.fromARGB(255, 40, 43, 50),
+                        ),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -299,16 +244,59 @@ class _TransactionsPageState extends State<TransactionsPage> {
               children: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('Cancel',
-                      style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
                 ),
                 TextButton(
-                  onPressed: () =>
-                      _addOrUpdateTransaction(existing: transaction),
-                  child: const Text('Save',
-                      style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold)),
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      final place = _placeController.text;
+                      final amountValue = double.parse(_amountController.text);
+                      final isIncome = _selectedType?.toLowerCase() == 'income';
+                      final logoPath = _selectedBrand != null
+                          ? brandLogos[_selectedBrand!]
+                          : null;
+
+                      TransactionModel transactionModel;
+                      if (transaction != null) {
+                        transactionModel = transaction.copyWith(
+                          place: place,
+                          amount: amountValue,
+                          logoPath: logoPath,
+                          type: isIncome ? 'income' : 'expense',
+                        );
+                        await dbManager.updateTransaction(transactionModel);
+                        final index = _transactions
+                            .indexWhere((t) => t.id == transaction.id);
+                        setState(() => _transactions[index] = transactionModel);
+                      } else {
+                        transactionModel = TransactionModel(
+                          email: widget.email,
+                          place: place,
+                          amount: amountValue,
+                          date: DateTime.now(),
+                          logoPath: logoPath,
+                          cardId: 0,
+                          type: isIncome ? 'income' : 'expense',
+                        );
+                        await dbManager.insertTransaction(transactionModel);
+                        _loadTransactions();
+                      }
+
+                      Navigator.pop(context);
+                      _placeController.clear();
+                      _amountController.clear();
+                      _selectedBrand = null;
+                    }
+                  },
+                  child: const Text(
+                    "Save",
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
@@ -320,11 +308,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<BalanceProvider>();
-    final transactionsForCard = provider.defaultCardId != null
-        ? provider.transactionsForCard(provider.defaultCardId!)
-        : _transactions;
-
     return Scaffold(
       backgroundColor: const Color(0xff181a1e),
       appBar: AppBar(
@@ -336,14 +319,15 @@ class _TransactionsPageState extends State<TransactionsPage> {
       body: Column(
         children: [
           Expanded(
-            child: transactionsForCard.isEmpty
+            child: _transactions.isEmpty
                 ? const Center(
                     child: Text("No transactions yet",
                         style: TextStyle(color: Colors.white70)))
                 : ListView.builder(
-                    itemCount: transactionsForCard.length,
+                    itemCount: _transactions.length,
                     itemBuilder: (ctx, index) {
-                      final t = transactionsForCard[index];
+                      final t = _transactions[index];
+                      final isIncome = t.type.toLowerCase() == 'income';
                       return Dismissible(
                         key: ValueKey(t.id),
                         background: Container(
@@ -356,10 +340,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
                         onDismissed: (direction) async {
                           await dbManager.deleteTransaction(t.id!);
                           _loadTransactions();
-                          if (provider.defaultCardId != null) {
-                            provider.removeTransaction(
-                                provider.defaultCardId!, t);
-                          }
                         },
                         child: ListTile(
                           onTap: () => _openTransactionDialog(transaction: t),
@@ -384,14 +364,11 @@ class _TransactionsPageState extends State<TransactionsPage> {
                               "${t.date.day}/${t.date.month}/${t.date.year}",
                               style: const TextStyle(color: Colors.white54)),
                           trailing: Text(
-                            '${t.type == 'income' ? '+' : '-'}\$${t.amount.toStringAsFixed(2)}',
-                            style: TextStyle(
-                              color: t.type == 'income'
-                                  ? Colors.green
-                                  : Colors.red,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                              '${isIncome ? '+' : '-'}\$${t.amount.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                color: isIncome ? Colors.green : Colors.red,
+                                fontWeight: FontWeight.normal,
+                              )),
                         ),
                       );
                     },
