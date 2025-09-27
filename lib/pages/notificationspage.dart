@@ -1,10 +1,11 @@
 import 'package:expenses_tracker/components/mybutton.dart';
-import 'package:expenses_tracker/pages/dashboard.dart';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import 'package:provider/provider.dart';
-import '../services/notification_provider.dart';
-import 'package:expenses_tracker/models/notifications.dart';
+
+import 'package:expenses_tracker/services/notification_provider.dart';
 
 class NotificationsPage extends StatelessWidget {
   const NotificationsPage({super.key});
@@ -15,58 +16,80 @@ class NotificationsPage extends StatelessWidget {
     final notifications = notifProvider.allNotifications;
 
     return Scaffold(
-      backgroundColor: const Color(0xff181a1e),
+      backgroundColor: Color(0xff181a1e),
       appBar: AppBar(
-        backgroundColor: const Color(0xff181a1e),
-        title: const Text(
+        backgroundColor: Color(0xff181a1e),
+        title: Text(
           'Notifications',
           style: TextStyle(color: Colors.white),
         ),
-        // Ici on peut juste changer la couleur du leading par défaut
-        iconTheme: const IconThemeData(
-          color: Colors.white, // ← couleur de l'icône "back"
-        ),
-        // Si tu veux explicitement un bouton retour personnalisé, tu peux le faire comme ça
+
+        //changing the return icon's color to white
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Column(
         children: [
           Expanded(
+            //building a listview of notifications
             child: ListView.builder(
               padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
               itemCount: notifications.length,
-              itemBuilder: (context, index) {
+              itemBuilder: (BuildContext context, int index) {
                 final n = notifications[index];
+
+                //creating a padding to have some spaces
                 return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  padding: EdgeInsets.symmetric(vertical: 6),
                   child: Dismissible(
                     key: ValueKey(n.id),
                     background: Container(
+                      //generating a red dismissible with a white trash can
                       color: Colors.red,
                       alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: const Icon(Icons.delete, color: Colors.white),
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Icon(
+                        CupertinoIcons.trash_fill,
+                        color: Colors.white,
+                      ),
                     ),
+
+                    ///direction the dismissible should take
+                    ///and when dismissed , a notification is deleted
+                    ///by the help of the provider
                     direction: DismissDirection.endToStart,
                     onDismissed: (direction) {
-                      notifProvider.deleteNotification(
-                          n.id); // à créer dans ton provider
+                      notifProvider.deleteNotification(n.id);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Notification deleted!')),
+                        SnackBar(
+                          content: Text('Notification deleted!'),
+                        ),
                       );
                     },
+
+                    ///creating a listile to display a notification
+                    ///with title and etc...and when tapped , it's read automatically
+                    ///
                     child: ListTile(
-                      tileColor:
-                          n.read ? const Color(0xff383a44) : Colors.green,
-                      title: Text(n.title,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold)),
-                      subtitle: Text(n.description,
-                          style: const TextStyle(color: Colors.white70)),
+                      tileColor: n.read ? Color(0xff383a44) : Colors.green,
+                      title: Text(
+                        n.title,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Text(
+                        n.description,
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
                       trailing: Text(
-                        "${n.date.hour}:${n.date.minute.toString().padLeft(2, '0')}",
-                        style: const TextStyle(
-                            color: Colors.white54, fontSize: 12),
+                        '${n.date.hour}:${n.date.minute.toString().padLeft(2, '0')}',
+                        style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                        ),
                       ),
                       onTap: () => notifProvider.markAsRead(n.id),
                     ),
@@ -81,7 +104,9 @@ class NotificationsPage extends StatelessWidget {
             buttonHeight: 40,
             buttonWidth: 200,
           ),
-          const SizedBox(height: 50),
+          SizedBox(
+            height: 50,
+          ),
         ],
       ),
     );

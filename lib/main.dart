@@ -1,4 +1,3 @@
-import 'package:expenses_tracker/pages/notificationspage.dart';
 import 'package:expenses_tracker/services/balance_provider.dart';
 import 'package:expenses_tracker/management/database.dart';
 import 'package:expenses_tracker/management/sessionmanager.dart';
@@ -26,9 +25,6 @@ void main() async {
   // ✅ Initialise toujours la DB avec version:1
 
   await dbManager.initialisation();
-
-  // Récupère l'utilisateur courant (email si connecté)
-  final currentUserEmail = await SessionManager.getCurrentUser();
 
   runApp(
     MultiProvider(

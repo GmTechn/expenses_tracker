@@ -383,8 +383,21 @@ class _TransactionsPageState extends State<TransactionsPage> {
                             ),
                             direction: DismissDirection.endToStart,
                             onDismissed: (direction) async {
+                              //remove from the database
                               await dbManager.deleteTransaction(t.id!);
                               _loadTransactions();
+
+                              //remove from provider
+                              if (provider.defaultCardId != null) {
+                                provider.removeTransaction(
+                                    provider.defaultCardId!, t);
+                              } else {
+                                setState(() {
+                                  _transactions
+                                      .removeWhere((tx) => tx.id == t.id);
+                                });
+                              }
+
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                     content: Text('Transaction deleted!')),

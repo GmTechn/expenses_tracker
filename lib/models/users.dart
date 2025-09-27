@@ -40,4 +40,23 @@ class AppUser {
       photoPath: map['photoPath'] ?? '',
     );
   }
+  AppUser copyWith({
+    int? id,
+    String? fname,
+    String? lname,
+    String? email,
+    String? password,
+    String? phone,
+    String? photoPath,
+  }) {
+    return AppUser(
+      id: id ?? this.id,
+      fname: fname ?? this.fname,
+      lname: lname ?? this.lname,
+      email: email ?? this.email,
+      password: password ?? this.password,
+      phone: phone ?? this.phone,
+      photoPath: photoPath ?? this.photoPath,
+    );
+  }
 }

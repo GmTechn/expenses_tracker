@@ -342,7 +342,7 @@ class _DashboardState extends State<Dashboard> {
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
-                      fontSize: 18)),
+                      fontSize: 14)),
               const SizedBox(height: 10),
               // Ici on utilise toujours le provider pour recent transactions et totaux
               Consumer<BalanceProvider>(
@@ -371,7 +371,7 @@ class _DashboardState extends State<Dashboard> {
                 },
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 600),
 
               // Users button
               MyButton(
