@@ -50,7 +50,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Expenses Tracker',
+      title: 'Budget Buddy',
       theme: ThemeData(primarySwatch: Colors.blue),
 
       /// ✅ Si user existe → Dashboard

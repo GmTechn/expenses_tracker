@@ -371,7 +371,7 @@ class _DashboardState extends State<Dashboard> {
                 },
               ),
 
-              const SizedBox(height: 600),
+              const SizedBox(height: 200),
 
               // Users button
               MyButton(

@@ -2,6 +2,7 @@ import 'package:expenses_tracker/components/mybutton.dart';
 import 'package:expenses_tracker/components/mysquaretile.dart';
 import 'package:expenses_tracker/components/mytextfield.dart';
 import 'package:expenses_tracker/management/database.dart';
+import 'package:expenses_tracker/models/users.dart';
 import 'package:expenses_tracker/pages/dashboard.dart';
 import 'package:expenses_tracker/pages/forgotpass.dart';
 import 'package:expenses_tracker/pages/signup.dart';
@@ -12,35 +13,55 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, required String email});
+  final String email;
+  const LoginPage({super.key, required this.email});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
-  //controllers
-
+  // Controllers
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
-  //bolean for password visibility
+  // Boolean for password visibility
   bool _isPasswordVisible = false;
 
-  //signing in with google
+  // Google sign-in instance
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  //initializing database instance
-
+  // Database instance
   final DatabaseManager _dbManager = DatabaseManager();
 
-//signin with google function
+  // Instance of user
+  AppUser? _user;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  // Load user from DB
+  Future<void> _loadUser() async {
+    final user = await _dbManager.getUserByEmail(widget.email);
+    if (mounted) {
+      setState(() {
+        _user = user;
+      });
+    }
+  }
+
+  // Google Sign-In
   Future<void> signInWithGoogle() async {
     try {
       final account = await _googleSignIn.signIn();
       if (account != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Signed in with Google')),
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => Dashboard(email: account.email)),
         );
       }
     } catch (e) {
@@ -50,16 +71,21 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  //signing in with apple
-
+  // Apple Sign-In
   Future<void> _handleAppleSignIn() async {
     try {
-      final credential = await SignInWithApple.getAppleIDCredential(scopes: [
-        AppleIDAuthorizationScopes.email,
-        AppleIDAuthorizationScopes.fullName
-      ]);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Signed in with Apple: ${credential.email}")),
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName
+        ],
+      );
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (_) => Dashboard(email: credential.email ?? '')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -68,24 +94,21 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-//showing error messages
-
+  // Error message
   void showErrorMessage(String message) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: Color(0xff181a1e),
         content: Text(
           message,
-          style: const TextStyle(color: Color(0xff050c20)),
+          style: const TextStyle(color: Colors.white),
         ),
       ),
     );
   }
 
-//login funcion to use email and password
-//with local database
-
+  // Local login
   Future<void> loginUser() async {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
@@ -116,24 +139,12 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => Dashboard(email: email),
-        ),
+        MaterialPageRoute(builder: (_) => Dashboard(email: email)),
       );
     } catch (e) {
       showErrorMessage("Login failed: $e");
     }
-
-    if (!mounted) return;
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => Dashboard(email: email), // <-- ici on passe l'email
-      ),
-    );
   }
-
-  //UI design and functions calling
 
   @override
   Widget build(BuildContext context) {
@@ -145,14 +156,12 @@ class _LoginPageState extends State<LoginPage> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
-              physics: AlwaysScrollableScrollPhysics(),
+              physics: const AlwaysScrollableScrollPhysics(),
               child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight,
-                ),
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: IntrinsicHeight(
                   child: Padding(
-                    padding: EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(16.0),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -165,20 +174,25 @@ class _LoginPageState extends State<LoginPage> {
                         Text(
                           'B U D G E T  B U D D Y',
                           style: GoogleFonts.abel(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 30,
-                              color: whiteColor),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 30,
+                            color: whiteColor,
+                          ),
                         ),
                         const SizedBox(height: 20),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              'Welcome back!',
-                              style: TextStyle(
-                                color: whiteColor,
-                              ),
+                            const Text(
+                              'Welcome back ',
+                              style: TextStyle(color: Colors.white70),
                             ),
+                            if (_user != null) ...[
+                              Text(
+                                _user != null ? "${_user!.fname}!" : "Guest!",
+                                style: const TextStyle(color: Colors.white70),
+                              ),
+                            ]
                           ],
                         ),
                         const SizedBox(height: 40),
@@ -186,7 +200,7 @@ class _LoginPageState extends State<LoginPage> {
                           controller: emailController,
                           hintText: 'Email',
                           obscureText: false,
-                          leadingIcon: Icon(CupertinoIcons.envelope_fill,
+                          leadingIcon: const Icon(CupertinoIcons.envelope_fill,
                               color: Colors.white24),
                         ),
                         const SizedBox(height: 20),
@@ -221,8 +235,9 @@ class _LoginPageState extends State<LoginPage> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) =>
-                                          const ForgotPasswordPage()),
+                                    builder: (context) =>
+                                        const ForgotPasswordPage(),
+                                  ),
                                 );
                               },
                               child: Text(
@@ -244,20 +259,22 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         const SizedBox(height: 40),
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 25.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 25.0),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               Expanded(
-                                  child: Divider(
-                                      thickness: .5, color: whiteColor)),
-                              SizedBox(width: 10),
+                                child:
+                                    Divider(thickness: .5, color: whiteColor),
+                              ),
+                              const SizedBox(width: 10),
                               Text('Or continue with',
                                   style: TextStyle(color: whiteColor)),
-                              SizedBox(width: 10),
+                              const SizedBox(width: 10),
                               Expanded(
-                                  child: Divider(
-                                      thickness: .5, color: whiteColor)),
+                                child:
+                                    Divider(thickness: .5, color: whiteColor),
+                              ),
                             ],
                           ),
                         ),
@@ -266,11 +283,13 @@ class _LoginPageState extends State<LoginPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             MySquareTile(
-                                imagePath: 'assets/images/google.png',
-                                onTap: signInWithGoogle),
+                              imagePath: 'assets/images/google.png',
+                              onTap: signInWithGoogle,
+                            ),
                             MySquareTile(
-                                imagePath: 'assets/images/apple.png',
-                                onTap: _handleAppleSignIn),
+                              imagePath: 'assets/images/apple.png',
+                              onTap: _handleAppleSignIn,
+                            ),
                           ],
                         ),
                         const SizedBox(height: 40),
@@ -289,13 +308,14 @@ class _LoginPageState extends State<LoginPage> {
                               child: const Text(
                                 ' Sign up',
                                 style: TextStyle(
-                                    color: Colors.blue,
-                                    fontWeight: FontWeight.bold),
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 20),
                           ],
                         ),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
