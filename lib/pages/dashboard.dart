@@ -188,8 +188,8 @@ class _DashboardState extends State<Dashboard> {
                                   color: Colors.white54)),
                           Text(
                             _currentUser != null
-                                ? "${_currentUser!.fname} ${_currentUser!.lname}"
-                                : "Guest",
+                                ? "${_currentUser!.fname} ${_currentUser!.lname}!"
+                                : "Guest!",
                             style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -271,7 +271,7 @@ class _DashboardState extends State<Dashboard> {
               else
                 Column(
                   children: [
-                    TextButton.icon(
+                    TextButton(
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -280,12 +280,14 @@ class _DashboardState extends State<Dashboard> {
                                   MyCardsPage(email: widget.email)),
                         );
                       },
-                      label: const Text('Set up default card',
-                          style: TextStyle(color: Colors.white70)),
-                      icon: const Icon(CupertinoIcons.creditcard_fill,
-                          color: Colors.white),
+                      child: const Text(
+                        'Click here to set up a default card!',
+                        style: TextStyle(
+                          color: Colors.white70,
+                        ),
+                      ),
                     ),
-                    MyCards(
+                    const MyCards(
                         amount: '0.00\$',
                         cardnumber: '0000 0000 0000 0000',
                         expirydate: 'mm/yy',

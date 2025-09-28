@@ -33,14 +33,16 @@ class MyNavBar extends StatelessWidget {
                 icon: CupertinoIcons.house_fill,
                 selected: currentIndex == 0,
                 onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => Dashboard(
-                        email: email,
+                  if (currentIndex != 0) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Dashboard(
+                          email: email,
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  }
                 },
               ),
               IconBottomBar(
@@ -48,12 +50,16 @@ class MyNavBar extends StatelessWidget {
                 icon: CupertinoIcons.creditcard_fill,
                 selected: currentIndex == 1,
                 onPressed: () {
-                  Navigator.push(
+                  if (currentIndex != 1) {
+                    Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => MyCardsPage(
-                                email: email,
-                              )));
+                        builder: (context) => MyCardsPage(
+                          email: email,
+                        ),
+                      ),
+                    );
+                  }
                 },
               ),
               IconBottomBar(
@@ -61,13 +67,16 @@ class MyNavBar extends StatelessWidget {
                 icon: CupertinoIcons.money_dollar_circle_fill,
                 selected: currentIndex == 2,
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
+                  if (currentIndex != 2) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
                         builder: (context) => TransactionsPage(
-                              email: email,
-                            )),
-                  );
+                          email: email,
+                        ),
+                      ),
+                    );
+                  }
                 },
               ),
               IconBottomBar(
@@ -75,12 +84,14 @@ class MyNavBar extends StatelessWidget {
                 icon: CupertinoIcons.person_fill,
                 selected: currentIndex == 3,
                 onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProfilePage(email: email),
-                    ),
-                  );
+                  if (currentIndex != 3) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProfilePage(email: email),
+                      ),
+                    );
+                  }
                 },
               ),
             ],
