@@ -472,7 +472,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
         onPressed: () => _openTransactionDialog(),
         child: const Icon(CupertinoIcons.add, color: Colors.white),
       ),
-      bottomNavigationBar: MyNavBar(currentIndex: 1, email: widget.email),
+      bottomNavigationBar: MyNavBar(currentIndex: 2, email: widget.email),
     );
   }
 }

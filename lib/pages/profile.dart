@@ -170,12 +170,30 @@ class _ProfilePageState extends State<ProfilePage> {
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
-            title: const Text('Success'),
-            content: const Text('Your changes have been saved.'),
+            backgroundColor: const Color(0xff181a1e),
+            title: const Text(
+              'Success',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            content: const Text(
+              'Your changes have been saved.',
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
+                child: const Text(
+                  'OK',
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ],
           ),
@@ -195,16 +213,39 @@ class _ProfilePageState extends State<ProfilePage> {
     final doCancel = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Discard changes?'),
-        content: const Text('Are you sure you want to discard your edits?'),
+        backgroundColor: Color(0xff181a1e),
+        title: const Text(
+          'Discard changes?',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: const Text(
+          'Are you sure you want to discard your edits?',
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('No'),
+            child: const Text(
+              'No',
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Yes'),
+            child: const Text(
+              'Yes',
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
           ),
         ],
       ),
@@ -240,100 +281,122 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xff050c20)))
+              child: CircularProgressIndicator(color: Color(0xff181a1e)))
           : RefreshIndicator(
               onRefresh: _loadProfile,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Stack(
-                      children: [
-                        GestureDetector(
-                          onTap: _showFullImage,
-                          child: CircleAvatar(
-                            radius: 60,
-                            backgroundColor: Colors.grey.shade300,
-                            backgroundImage: _imageFile != null
-                                ? FileImage(_imageFile!)
-                                : null,
-                            child: _imageFile == null
-                                ? const Icon(
-                                    CupertinoIcons.person_crop_circle_fill,
-                                    size: 80,
-                                    color: Colors.white)
-                                : null,
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: GestureDetector(
-                            onTap: _showImagePickerOptions,
-                            child: const CircleAvatar(
-                              radius: 20,
-                              backgroundColor: Colors.white,
-                              child: Icon(CupertinoIcons.camera_fill,
-                                  color: Color(0xff050c20)),
+              child: SafeArea(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: ConstrainedBox(
+                        constraints:
+                            BoxConstraints(minHeight: constraints.maxHeight),
+                        child: IntrinsicHeight(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Stack(
+                                  children: [
+                                    GestureDetector(
+                                      onTap: _showFullImage,
+                                      child: CircleAvatar(
+                                        radius: 60,
+                                        backgroundColor: Colors.grey.shade300,
+                                        backgroundImage: _imageFile != null
+                                            ? FileImage(_imageFile!)
+                                            : null,
+                                        child: _imageFile == null
+                                            ? const Icon(
+                                                CupertinoIcons
+                                                    .person_crop_circle_fill,
+                                                size: 80,
+                                                color: Colors.white)
+                                            : null,
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: GestureDetector(
+                                        onTap: _showImagePickerOptions,
+                                        child: const CircleAvatar(
+                                          radius: 20,
+                                          backgroundColor: Colors.white,
+                                          child: Icon(
+                                              CupertinoIcons.camera_fill,
+                                              color: Color(0xff181a1e)),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 80),
+                                MyTextFormField(
+                                  controller: _fnameController,
+                                  hintText: 'First Name',
+                                  obscureText: false,
+                                  leadingIcon:
+                                      const Icon(CupertinoIcons.person_fill),
+                                ),
+                                const SizedBox(height: 20),
+                                MyTextFormField(
+                                  controller: _lnameController,
+                                  hintText: 'Last Name',
+                                  obscureText: false,
+                                  leadingIcon:
+                                      const Icon(CupertinoIcons.person_fill),
+                                ),
+                                const SizedBox(height: 20),
+                                MyTextFormField(
+                                  controller: _emailController,
+                                  hintText: 'Email',
+                                  obscureText: false,
+                                  leadingIcon:
+                                      const Icon(CupertinoIcons.mail_solid),
+                                ),
+                                const SizedBox(height: 20),
+                                MyTextFormField(
+                                  controller: _phoneController,
+                                  hintText: 'Phone Number',
+                                  obscureText: false,
+                                  leadingIcon:
+                                      const Icon(CupertinoIcons.phone_fill),
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                    LengthLimitingTextInputFormatter(10),
+                                  ],
+                                ),
+                                const SizedBox(height: 40),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    MyButton(
+                                      textbutton: 'Update',
+                                      onTap: _updateProfile,
+                                      buttonHeight: 40,
+                                      buttonWidth: 100,
+                                    ),
+                                    const SizedBox(width: 40),
+                                    MyButton(
+                                      textbutton: 'Cancel',
+                                      onTap: _confirmCancel,
+                                      buttonHeight: 40,
+                                      buttonWidth: 100,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                              ],
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 30),
-                    MyTextFormField(
-                      controller: _fnameController,
-                      hintText: 'First Name',
-                      obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.person_fill),
-                    ),
-                    const SizedBox(height: 20),
-                    MyTextFormField(
-                      controller: _lnameController,
-                      hintText: 'Last Name',
-                      obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.person_fill),
-                    ),
-                    const SizedBox(height: 20),
-                    MyTextFormField(
-                      controller: _emailController,
-                      hintText: 'Email',
-                      obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.mail_solid),
-                    ),
-                    const SizedBox(height: 20),
-                    MyTextFormField(
-                      controller: _phoneController,
-                      hintText: 'Phone Number',
-                      obscureText: false,
-                      leadingIcon: const Icon(CupertinoIcons.phone_fill),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(10),
-                      ],
-                    ),
-                    const SizedBox(height: 40),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        MyButton(
-                          textbutton: 'Update',
-                          onTap: _updateProfile,
-                          buttonHeight: 40,
-                          buttonWidth: 100,
-                        ),
-                        const SizedBox(width: 40),
-                        MyButton(
-                          textbutton: 'Cancel',
-                          onTap: _confirmCancel,
-                          buttonHeight: 40,
-                          buttonWidth: 100,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+                      ),
+                    );
+                  },
                 ),
               ),
             ),

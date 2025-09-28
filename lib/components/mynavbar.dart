@@ -44,9 +44,22 @@ class MyNavBar extends StatelessWidget {
                 },
               ),
               IconBottomBar(
+                text: "Cards",
+                icon: CupertinoIcons.creditcard_fill,
+                selected: currentIndex == 1,
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => MyCardsPage(
+                                email: email,
+                              )));
+                },
+              ),
+              IconBottomBar(
                 text: "Transactions",
                 icon: CupertinoIcons.money_dollar_circle_fill,
-                selected: currentIndex == 1,
+                selected: currentIndex == 2,
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -55,19 +68,6 @@ class MyNavBar extends StatelessWidget {
                               email: email,
                             )),
                   );
-                },
-              ),
-              IconBottomBar(
-                text: "Cards",
-                icon: CupertinoIcons.creditcard_fill,
-                selected: currentIndex == 2,
-                onPressed: () {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => MyCardsPage(
-                                email: email,
-                              )));
                 },
               ),
               IconBottomBar(

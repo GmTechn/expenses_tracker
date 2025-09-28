@@ -302,11 +302,13 @@ class _LoginPageState extends State<LoginPage> {
                               onTap: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const SignUpPage(),
+                                  builder: (context) => const SignUpPage(
+                                    email: '',
+                                  ),
                                 ),
                               ),
                               child: const Text(
-                                ' Sign up',
+                                'Sign Up',
                                 style: TextStyle(
                                   color: Colors.blue,
                                   fontWeight: FontWeight.bold,

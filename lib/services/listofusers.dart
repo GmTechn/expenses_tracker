@@ -365,18 +365,6 @@ class _ListOfUsersState extends State<ListOfUsers> {
               },
             ),
           ),
-          MyButton(
-              textbutton: 'Dashboard',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => Dashboard(email: ''),
-                  ),
-                );
-              },
-              buttonHeight: 40,
-              buttonWidth: 150),
           SizedBox(
             height: 50,
           ),

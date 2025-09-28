@@ -1,51 +1,61 @@
+import 'package:expenses_tracker/components/mybutton.dart';
+import 'package:expenses_tracker/components/mysquaretile.dart';
+import 'package:expenses_tracker/components/mytextfield.dart';
+import 'package:expenses_tracker/management/database.dart';
 import 'package:expenses_tracker/management/sessionmanager.dart';
+import 'package:expenses_tracker/models/users.dart';
+import 'package:expenses_tracker/pages/dashboard.dart';
+import 'package:expenses_tracker/pages/forgotpass.dart';
+import 'package:expenses_tracker/pages/login.dart';
+import 'package:expenses_tracker/pages/profile.dart';
+import 'package:expenses_tracker/pages/signup.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import 'package:expenses_tracker/components/mybutton.dart';
-import 'package:expenses_tracker/components/mytextfield.dart';
-import 'package:expenses_tracker/components/mysquaretile.dart';
-import 'package:expenses_tracker/management/database.dart';
-import 'package:expenses_tracker/models/users.dart';
-import 'package:expenses_tracker/pages/profile.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class SignUpPage extends StatefulWidget {
-  const SignUpPage({super.key});
+  final String email;
+  const SignUpPage({super.key, required this.email});
 
   @override
   State<SignUpPage> createState() => _SignUpPageState();
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-  //controllers
-
+  // Controllers
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
-//database instance
-
-  final DatabaseManager _dbManager = DatabaseManager();
-
-  //google sign in var
-
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  // Boolean for password visibility
   bool _isPasswordVisible = false;
 
+  // Google sign-in instance
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  // Database instance
+  final DatabaseManager _dbManager = DatabaseManager();
+
+  // Instance of user
+  AppUser? _user;
+
+//initializing database
   @override
   void initState() {
     super.initState();
     _dbManager.initialisation();
   }
 
+//show scaffold error message
+
   void showMessage(String message) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
+//signing up a user
   Future<void> registerUser() async {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
@@ -97,6 +107,7 @@ class _SignUpPageState extends State<SignUpPage> {
     }
   }
 
+  // Google Sign-In
   Future<void> signInWithGoogle() async {
     try {
       final account = await _googleSignIn.signIn();
@@ -124,6 +135,8 @@ class _SignUpPageState extends State<SignUpPage> {
       showMessage('Google sign-in failed: $e');
     }
   }
+
+  // Apple Sign-In
 
   Future<void> _handleAppleSignIn() async {
     try {
@@ -157,49 +170,77 @@ class _SignUpPageState extends State<SignUpPage> {
     }
   }
 
+  // Error message
+  void showErrorMessage(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Color(0xff181a1e),
+        content: Text(
+          message,
+          style: const TextStyle(color: Colors.white),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    Color whiteColor = Colors.white;
+
     return Scaffold(
       backgroundColor: const Color(0xff181a1e),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
-              physics: AlwaysScrollableScrollPhysics(),
+              physics: const AlwaysScrollableScrollPhysics(),
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: IntrinsicHeight(
                   child: Padding(
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16.0),
                     child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(
                           CupertinoIcons.chart_bar_circle_fill,
+                          color: Color.fromRGBO(76, 175, 80, 1),
                           size: 60,
-                          color: Colors.green,
                         ),
                         const SizedBox(height: 40),
                         Text(
                           'B U D G E T  B U D D Y',
                           style: GoogleFonts.abel(
-                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 30,
+                            color: whiteColor,
                           ),
                         ),
                         const SizedBox(height: 20),
-                        const Text('Create your account here!',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Create an account here!',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                            if (_user != null) ...[
+                              Text(
+                                _user != null ? "${_user!.fname}!" : "Guest!",
+                                style: const TextStyle(color: Colors.white70),
+                              ),
+                            ]
+                          ],
+                        ),
                         const SizedBox(height: 40),
                         MyTextFormField(
-                            controller: emailController,
-                            hintText: 'Email',
-                            obscureText: false,
-                            leadingIcon: const Icon(
-                              CupertinoIcons.envelope_fill,
-                            )),
+                          controller: emailController,
+                          hintText: 'Email',
+                          obscureText: false,
+                          leadingIcon: const Icon(CupertinoIcons.envelope_fill,
+                              color: Colors.white24),
+                        ),
                         const SizedBox(height: 20),
                         MyTextFormField(
                           controller: passwordController,
@@ -207,12 +248,14 @@ class _SignUpPageState extends State<SignUpPage> {
                           obscureText: !_isPasswordVisible,
                           leadingIcon: const Icon(
                             CupertinoIcons.lock_fill,
+                            color: Colors.white24,
                           ),
                           trailingIcon: IconButton(
                             icon: Icon(
                               _isPasswordVisible
                                   ? CupertinoIcons.eye_fill
                                   : CupertinoIcons.eye_slash_fill,
+                              color: Colors.white24,
                             ),
                             onPressed: () => setState(
                                 () => _isPasswordVisible = !_isPasswordVisible),
@@ -225,12 +268,14 @@ class _SignUpPageState extends State<SignUpPage> {
                           obscureText: !_isPasswordVisible,
                           leadingIcon: const Icon(
                             CupertinoIcons.lock_fill,
+                            color: Colors.white24,
                           ),
                           trailingIcon: IconButton(
                             icon: Icon(
                               _isPasswordVisible
                                   ? CupertinoIcons.eye_fill
                                   : CupertinoIcons.eye_slash_fill,
+                              color: Colors.white24,
                             ),
                             onPressed: () => setState(
                                 () => _isPasswordVisible = !_isPasswordVisible),
@@ -238,35 +283,28 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                         const SizedBox(height: 40),
                         MyButton(
-                            textbutton: 'Sign Up',
-                            onTap: registerUser,
-                            buttonHeight: 40,
-                            buttonWidth: 200),
+                          textbutton: 'Sign Up',
+                          onTap: registerUser,
+                          buttonHeight: 40,
+                          buttonWidth: 200,
+                        ),
                         const SizedBox(height: 40),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 25.0),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 25.0),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               Expanded(
-                                child: Divider(
-                                  thickness: .5,
-                                  color: Colors.white,
-                                ),
+                                child:
+                                    Divider(thickness: .5, color: whiteColor),
                               ),
-                              SizedBox(width: 10),
-                              Text(
-                                'Or continue with',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                ),
-                              ),
-                              SizedBox(width: 10),
+                              const SizedBox(width: 10),
+                              Text('Or continue with',
+                                  style: TextStyle(color: whiteColor)),
+                              const SizedBox(width: 10),
                               Expanded(
-                                child: Divider(
-                                  thickness: .5,
-                                  color: Colors.white,
-                                ),
+                                child:
+                                    Divider(thickness: .5, color: whiteColor),
                               ),
                             ],
                           ),
@@ -276,27 +314,27 @@ class _SignUpPageState extends State<SignUpPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             MySquareTile(
-                                imagePath: 'assets/images/google.png',
-                                onTap: signInWithGoogle),
+                              imagePath: 'assets/images/google.png',
+                              onTap: signInWithGoogle,
+                            ),
                             MySquareTile(
-                                imagePath: 'assets/images/apple.png',
-                                onTap: _handleAppleSignIn),
+                              imagePath: 'assets/images/apple.png',
+                              onTap: _handleAppleSignIn,
+                            ),
                           ],
                         ),
                         const SizedBox(height: 40),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
-                              "Already have an account? ",
-                              style: TextStyle(color: Colors.white),
-                            ),
+                            Text("Already have an account? ",
+                                style: TextStyle(color: whiteColor)),
                             GestureDetector(
                               onTap: () {
                                 Navigator.pop(context);
                               },
                               child: const Text(
-                                "Login",
+                                'Login',
                                 style: TextStyle(
                                   color: Colors.blue,
                                   fontWeight: FontWeight.bold,

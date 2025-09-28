@@ -397,7 +397,7 @@ class _MyCardsPageState extends State<MyCardsPage> {
         onPressed: () => _cardAddEditDialog(),
         child: const Icon(CupertinoIcons.add, color: Colors.white),
       ),
-      bottomNavigationBar: MyNavBar(currentIndex: 2, email: widget.email),
+      bottomNavigationBar: MyNavBar(currentIndex: 1, email: widget.email),
     );
   }
 }

@@ -1,6 +1,5 @@
 import 'package:expenses_tracker/services/balance_provider.dart';
 import 'package:expenses_tracker/management/database.dart';
-import 'package:expenses_tracker/management/sessionmanager.dart';
 import 'package:expenses_tracker/pages/dashboard.dart';
 import 'package:expenses_tracker/pages/login.dart';
 import 'package:expenses_tracker/pages/signup.dart';
@@ -64,7 +63,10 @@ class MyApp extends StatelessWidget {
 
         switch (settings.name) {
           case '/signup':
-            return MaterialPageRoute(builder: (_) => const SignUpPage());
+            return MaterialPageRoute(
+                builder: (_) => const SignUpPage(
+                      email: '',
+                    ));
           case '/dashboard':
             return MaterialPageRoute(
               builder: (_) => Dashboard(email: args?['email'] ?? ''),

@@ -1,6 +1,7 @@
 import 'package:expenses_tracker/components/mybutton.dart';
 import 'package:expenses_tracker/components/mytextfield.dart';
 import 'package:expenses_tracker/management/database.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ForgotPasswordPage extends StatelessWidget {
@@ -36,30 +37,39 @@ class ForgotPasswordPage extends StatelessWidget {
     }
 
     return Scaffold(
+      backgroundColor: const Color(0xff181a1e),
       appBar: AppBar(
+        backgroundColor: const Color(0xff181a1e),
         title: const Text(
-          'Forgot Password',
-          style:
-              TextStyle(fontWeight: FontWeight.bold, color: Color(0xff050c20)),
+          'R E S E T',
+          style: TextStyle(color: Colors.white),
         ),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 40),
-            const Icon(Icons.lock, size: 40),
+            const Icon(
+              CupertinoIcons.lock_fill,
+              size: 60,
+              color: Colors.white70,
+            ),
             const SizedBox(height: 20),
             const Text(
               'Enter your email to reset password:',
-              style: TextStyle(color: Color(0xff050c20)),
+              style: TextStyle(color: Colors.white),
             ),
             const SizedBox(height: 40),
             MyTextFormField(
               controller: emailController,
               hintText: 'Email',
               obscureText: false,
-              leadingIcon: const Icon(Icons.email),
+              leadingIcon: const Icon(
+                CupertinoIcons.envelope_fill,
+                color: Colors.white70,
+              ),
             ),
             const SizedBox(height: 40),
             MyButton(
