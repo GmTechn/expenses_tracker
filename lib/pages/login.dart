@@ -187,12 +187,10 @@ class _LoginPageState extends State<LoginPage> {
                               'Welcome back ',
                               style: TextStyle(color: Colors.white70),
                             ),
-                            if (_user != null) ...[
-                              Text(
-                                _user != null ? "${_user!.fname}!" : "Guest!",
-                                style: const TextStyle(color: Colors.white70),
-                              ),
-                            ]
+                            Text(
+                              _user != null ? "${_user!.fname}!" : "Guest!",
+                              style: const TextStyle(color: Colors.white70),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 40),

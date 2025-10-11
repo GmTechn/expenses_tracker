@@ -53,10 +53,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(primarySwatch: Colors.blue),
 
       /// ✅ Si user existe → Dashboard
-      /// ✅ Sinon → SignUp (car DB est vide au lancement)
+      /// ✅ Sinon → Login (car DB est vide au lancement)
       home: initialEmail != null && initialEmail!.isNotEmpty
           ? Dashboard(email: initialEmail!)
-          : LoginPage(email: ''),
+          : const LoginPage(email: ''),
 
       onGenerateRoute: (settings) {
         final args = settings.arguments as Map<String, dynamic>?;

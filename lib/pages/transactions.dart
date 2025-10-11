@@ -312,12 +312,11 @@ class _TransactionsPageState extends State<TransactionsPage> {
                         final notifProvider =
                             context.read<NotificationProvider>();
                         notifProvider.addNotification(
-                          AppNotification(
-                            id: DateTime.now().toIso8601String(),
+                          AppNotification.create(
                             title: isIncome ? 'Income Added' : 'Expense Added',
                             description:
                                 '${_placeController.text} - \$${_amountController.text}',
-                            date: DateTime.now(),
+                            type: NotificationType.transaction,
                           ),
                         );
                       }

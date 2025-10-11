@@ -27,22 +27,13 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
-  //database instance
   final DatabaseManager _databaseManager = DatabaseManager();
 
-  //app user instance
   AppUser? _currentUser;
-
-  //card model instance
   CardModel? _defaultCard;
-
-  //list of recent transactions
   List<TransactionModel> _recentTransactions = [];
-
-  //profile photo
   String? _savedPhotoPath;
 
-//initializing state
   @override
   void initState() {
     super.initState();
@@ -50,7 +41,6 @@ class _DashboardState extends State<Dashboard> {
     _loadAllData();
   }
 
-//displaying photo picture
   Future<void> _loadSavedPhoto() async {
     final prefs = await SharedPreferences.getInstance();
     final path = prefs.getString('profile_photo_${widget.email}');
@@ -62,27 +52,22 @@ class _DashboardState extends State<Dashboard> {
   Future<void> _loadAllData() async {
     await _databaseManager.initialisation();
 
-    // Load user
     final user = await _databaseManager.getUserByEmail(widget.email);
     if (mounted) setState(() => _currentUser = user);
 
-    // Load cards
     final cards = await _databaseManager.getCards(widget.email);
     final provider = context.read<BalanceProvider>();
     provider.setCards(cards);
 
-    // Load default card
     final defaultCard = await _databaseManager.getDefaultCard(widget.email);
     if (defaultCard != null) {
       _defaultCard = defaultCard;
       provider.setDefaultCard(defaultCard.id!);
 
-      // Load transactions for default card
       final transactions = await _databaseManager.getTransactionsByCard(
           widget.email, defaultCard.id!);
       provider.setTransactionsForCard(defaultCard.id!, transactions);
 
-      // Keep recent transactions for UI
       if (mounted) {
         setState(() {
           _recentTransactions = transactions.toList()
@@ -92,7 +77,7 @@ class _DashboardState extends State<Dashboard> {
       }
     }
 
-    // Load all transactions for all cards into provider
+    // Load all transactions for other cards
     for (final card in cards) {
       if (card.id != _defaultCard?.id) {
         final txs = await _databaseManager.getTransactionsByCard(
@@ -102,7 +87,6 @@ class _DashboardState extends State<Dashboard> {
     }
   }
 
-  // replace your totalIncome / totalExpense getters with
   double get totalIncome {
     final provider = context.read<BalanceProvider>();
     final defaultCardId = provider.defaultCardId;
@@ -130,8 +114,52 @@ class _DashboardState extends State<Dashboard> {
       appBar: AppBar(
         backgroundColor: const Color(0xff181a1e),
         automaticallyImplyLeading: false,
-        title: const Text('D A S H B O A R D',
-            style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'D A S H B O A R D',
+          style: TextStyle(color: Colors.white),
+        ),
+        actions: [
+          Consumer<NotificationProvider>(
+            builder: (context, notifProvider, _) {
+              return Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(CupertinoIcons.bell_fill,
+                        size: 28, color: Colors.white),
+                    onPressed: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              NotificationsPage(email: widget.email),
+                        ),
+                      );
+                    },
+                  ),
+                  if (notifProvider.unreadCount > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '${notifProvider.unreadCount}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -139,7 +167,7 @@ class _DashboardState extends State<Dashboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // User info
+              // 🧍 User Info + Notifications
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -182,78 +210,33 @@ class _DashboardState extends State<Dashboard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Welcome back,',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white54)),
+                          const Text(
+                            'Welcome back,',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white54,
+                            ),
+                          ),
                           Text(
                             _currentUser != null
                                 ? "${_currentUser!.fname} ${_currentUser!.lname}!"
                                 : "Guest!",
                             style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    Consumer<NotificationProvider>(
-                      builder: (context, notifProvider, _) {
-                        return Stack(
-                          children: [
-                            IconButton(
-                              icon: const Icon(CupertinoIcons.bell_fill,
-                                  size: 28, color: Colors.white),
-                              onPressed: () async {
-                                // Utiliser le context parent
-                                final parentContext = this
-                                    .context; // context du State, sûr d’avoir accès au Provider
-                                await Navigator.of(parentContext).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const NotificationsPage(),
-                                  ),
-                                );
-
-                                // Marquer toutes les notifications comme lues après le retour
-                                if (mounted) {
-                                  parentContext
-                                      .read<NotificationProvider>()
-                                      .markAllAsRead();
-                                }
-                              },
-                            ),
-                            if (notifProvider.unreadCount > 0)
-                              Positioned(
-                                right: 8,
-                                top: 8,
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.red,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Text(
-                                    '${notifProvider.unreadCount}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        );
-                      },
-                    )
                   ],
                 ),
               ),
 
               const SizedBox(height: 20),
 
-              // Default card
+              // 💳 Default Card
               if (_defaultCard != null)
                 Consumer<BalanceProvider>(
                   builder: (context, provider, _) {
@@ -282,24 +265,23 @@ class _DashboardState extends State<Dashboard> {
                       },
                       child: const Text(
                         'Click here to set up a default card!',
-                        style: TextStyle(
-                          color: Colors.white70,
-                        ),
+                        style: TextStyle(color: Colors.white70),
                       ),
                     ),
                     const MyCards(
-                        amount: '0.00\$',
-                        cardnumber: '0000 0000 0000 0000',
-                        expirydate: 'mm/yy',
-                        username: 'no username',
-                        colorOne: Colors.blue,
-                        colorTwo: Colors.amber),
+                      amount: '0.00\$',
+                      cardnumber: '0000 0000 0000 0000',
+                      expirydate: 'mm/yy',
+                      username: 'no username',
+                      colorOne: Colors.blue,
+                      colorTwo: Colors.amber,
+                    ),
                   ],
                 ),
 
               const SizedBox(height: 20),
 
-              // Income & Expense
+              // 💰 Income & Expense
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -309,14 +291,19 @@ class _DashboardState extends State<Dashboard> {
                         onPressed: () {},
                         heroTag: "income",
                         backgroundColor: Colors.green,
-                        child: const Icon(CupertinoIcons.arrow_down_circle_fill,
-                            color: Colors.white),
+                        child: const Icon(
+                          CupertinoIcons.arrow_down_circle_fill,
+                          color: Colors.white,
+                        ),
                       ),
                       const SizedBox(height: 8),
-                      Text('+\$${totalIncome.toStringAsFixed(2)} Income',
-                          style: const TextStyle(
-                              color: Colors.green,
-                              fontWeight: FontWeight.bold)),
+                      Text(
+                        '+\$${totalIncome.toStringAsFixed(2)} Income',
+                        style: const TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   Column(
@@ -325,13 +312,19 @@ class _DashboardState extends State<Dashboard> {
                         onPressed: () {},
                         heroTag: "expense",
                         backgroundColor: Colors.red,
-                        child: const Icon(CupertinoIcons.arrow_up_circle_fill,
-                            color: Colors.white),
+                        child: const Icon(
+                          CupertinoIcons.arrow_up_circle_fill,
+                          color: Colors.white,
+                        ),
                       ),
                       const SizedBox(height: 8),
-                      Text('-\$${totalExpense.toStringAsFixed(2)} Expense',
-                          style: const TextStyle(
-                              color: Colors.red, fontWeight: FontWeight.bold)),
+                      Text(
+                        '-\$${totalExpense.toStringAsFixed(2)} Expense',
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -339,26 +332,21 @@ class _DashboardState extends State<Dashboard> {
 
               const SizedBox(height: 20),
 
-              // Recent Transactions
-              const Text('Recent Transactions',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      fontSize: 14)),
+              // 🧾 Recent Transactions
+              const Text(
+                'Recent Transactions',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontSize: 14,
+                ),
+              ),
               const SizedBox(height: 10),
-              // Ici on utilise toujours le provider pour recent transactions et totaux
               Consumer<BalanceProvider>(
                 builder: (context, provider, _) {
                   if (provider.defaultCardId == null) return const SizedBox();
                   final transactions =
                       provider.transactionsForCard(provider.defaultCardId!);
-
-                  transactions
-                      .where((t) => t.amount >= 0)
-                      .fold(0.0, (sum, t) => sum + t.amount);
-                  transactions
-                      .where((t) => t.amount < 0)
-                      .fold(0.0, (sum, t) => sum + t.amount.abs());
 
                   return Column(
                     children: transactions.take(5).map((t) {
@@ -375,16 +363,15 @@ class _DashboardState extends State<Dashboard> {
 
               const SizedBox(height: 200),
 
-              // Users button
+              // 👥 Users Button
               MyButton(
                 textbutton: 'Users',
                 onTap: () {
                   Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const ListOfUsers())).then((_) {
-                    _loadAllData();
-                  });
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ListOfUsers()),
+                  ).then((_) => _loadAllData());
                 },
                 buttonHeight: 40,
                 buttonWidth: 80,

@@ -175,7 +175,7 @@ class _SignUpPageState extends State<SignUpPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Color(0xff181a1e),
+        backgroundColor: const Color(0xff181a1e),
         content: Text(
           message,
           style: const TextStyle(color: Colors.white),

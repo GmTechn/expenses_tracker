@@ -28,6 +28,7 @@ class MyNavBar extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              //dashboard page icon
               IconBottomBar(
                 text: "Home",
                 icon: CupertinoIcons.house_fill,
@@ -45,6 +46,8 @@ class MyNavBar extends StatelessWidget {
                   }
                 },
               ),
+
+              //cards page icon
               IconBottomBar(
                 text: "Cards",
                 icon: CupertinoIcons.creditcard_fill,
@@ -62,6 +65,8 @@ class MyNavBar extends StatelessWidget {
                   }
                 },
               ),
+
+              //transactions page icon
               IconBottomBar(
                 text: "Transactions",
                 icon: CupertinoIcons.money_dollar_circle_fill,
@@ -79,6 +84,8 @@ class MyNavBar extends StatelessWidget {
                   }
                 },
               ),
+
+              //Profile page icon
               IconBottomBar(
                 text: "Profile",
                 icon: CupertinoIcons.person_fill,
