@@ -19,7 +19,7 @@ void main() async {
 
   //clearing db
 
-  //await dbManager.clearDatabase();
+  await dbManager.clearDatabase();
 
   // ✅ Initialise toujours la DB avec version:1
 

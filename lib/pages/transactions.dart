@@ -1,13 +1,14 @@
-import 'package:expenses_tracker/models/notifications.dart';
 import 'package:expenses_tracker/models/transactions.dart';
 import 'package:expenses_tracker/services/balance_provider.dart';
-import 'package:expenses_tracker/services/notification_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:expenses_tracker/components/mynavbar.dart';
 import 'package:expenses_tracker/components/mytextfield.dart';
 import 'package:expenses_tracker/management/database.dart';
 import 'package:provider/provider.dart';
+import 'package:expenses_tracker/models/notifications.dart';
+import 'package:expenses_tracker/services/notification_provider.dart'
+    as notif_service;
 
 class TransactionsPage extends StatefulWidget {
   const TransactionsPage({super.key, required this.email});
@@ -310,12 +311,18 @@ class _TransactionsPageState extends State<TransactionsPage> {
                             defaultCardId, transactionModel);
                         await dbManager.insertTransaction(transactionModel);
                         final notifProvider =
-                            context.read<NotificationProvider>();
+                            context.read<notif_service.NotificationProvider>();
+
                         notifProvider.addNotification(
-                          AppNotification.create(
+                          AppNotification(
+                            id: DateTime.now()
+                                .millisecondsSinceEpoch
+                                .toString(),
                             title: isIncome ? 'Income Added' : 'Expense Added',
                             description:
                                 '${_placeController.text} - \$${_amountController.text}',
+                            date: DateTime.now(),
+                            read: false,
                             type: NotificationType.transaction,
                           ),
                         );

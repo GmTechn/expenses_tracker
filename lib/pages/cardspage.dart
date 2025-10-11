@@ -234,7 +234,6 @@ class _MyCardsPageState extends State<MyCardsPage> {
                           expiryController.text.isNotEmpty &&
                           usernameController.text.isNotEmpty) {
                         final provider = context.read<BalanceProvider>();
-
                         final newCard = CardModel(
                           id: card?.id,
                           email: widget.email,

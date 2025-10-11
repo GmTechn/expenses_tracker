@@ -29,7 +29,10 @@ class NotificationsPage extends StatelessWidget {
           ? const Center(
               child: Text(
                 "You don't have any notifications!",
-                style: TextStyle(color: Colors.white54, fontSize: 16),
+                style: TextStyle(
+                  color: Colors.white54,
+                  fontSize: 16,
+                ),
               ),
             )
           : Column(
@@ -75,8 +78,8 @@ class NotificationsPage extends StatelessWidget {
                                         const Color(0xff1d1e22)
                                       ]
                                     : [
-                                        Colors.green,
                                         const Color.fromARGB(255, 55, 130, 58),
+                                        Colors.green,
                                       ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,

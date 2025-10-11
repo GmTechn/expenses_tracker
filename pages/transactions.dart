@@ -318,6 +318,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                             description:
                                 '${_placeController.text} - \$${_amountController.text}',
                             date: DateTime.now(),
+                            type: NotificationType.transaction,
                           ),
                         );
                       }

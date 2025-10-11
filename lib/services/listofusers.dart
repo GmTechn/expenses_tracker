@@ -89,7 +89,7 @@ class _ListOfUsersState extends State<ListOfUsers> {
         ),
         content: Text(
           "Are you sure you want to delete ${user.fname}?",
-          style: TextStyle(
+          style: const TextStyle(
             color: Colors.white,
           ),
         ),

@@ -6,7 +6,7 @@ PreferredSizeWidget myAppBar(BuildContext context, String title,
     backgroundColor: const Color(0xff181a1e),
     title: Text(
       title,
-      style: TextStyle(
+      style: const TextStyle(
         color: Colors.white,
       ),
     ),
