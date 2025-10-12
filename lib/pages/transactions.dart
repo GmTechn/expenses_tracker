@@ -7,9 +7,6 @@ import 'package:expenses_tracker/components/mynavbar.dart';
 import 'package:expenses_tracker/components/mytextfield.dart';
 import 'package:expenses_tracker/management/database.dart';
 import 'package:provider/provider.dart';
-import 'package:expenses_tracker/models/notifications.dart';
-import 'package:expenses_tracker/services/notification_provider.dart'
-    as notif_service;
 
 class TransactionsPage extends StatefulWidget {
   const TransactionsPage({super.key, required this.email});
@@ -88,12 +85,10 @@ class _TransactionsPageState extends State<TransactionsPage> {
     final provider = context.read<BalanceProvider>();
     final cardId = provider.defaultCardId;
     if (cardId == null) return 0.0;
-
     final transactions = provider.transactionsForCard(cardId);
 
     double total = 0.0;
     for (var t in transactions) {
-      // On ajoute le montant si income, sinon on soustrait (expense)
       total += t.type.toLowerCase() == 'income' ? t.amount : -t.amount;
     }
     return total;
@@ -169,8 +164,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       fillColor: const Color.fromARGB(255, 40, 43, 50),
                       filled: true,
                       prefixIcon: const Icon(CupertinoIcons.tag),
-
-                      // iconColor: Colors.,
                       prefixIconColor: Colors.white,
                       hintText: 'Select Brand',
                       hintStyle: const TextStyle(color: Colors.white54),
@@ -200,17 +193,13 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     items: const [
                       DropdownMenuItem(
                         value: 'Income',
-                        child: Text(
-                          'Income',
-                          style: TextStyle(color: Colors.white),
-                        ),
+                        child: Text('Income',
+                            style: TextStyle(color: Colors.white)),
                       ),
                       DropdownMenuItem(
                         value: 'Expense',
-                        child: Text(
-                          'Expense',
-                          style: TextStyle(color: Colors.white),
-                        ),
+                        child: Text('Expense',
+                            style: TextStyle(color: Colors.white)),
                       ),
                     ],
                     onChanged: (value) => setState(() => _selectedType = value),
@@ -222,14 +211,12 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       fillColor: const Color.fromARGB(255, 40, 43, 50),
                       filled: true,
                       prefixIcon: const Icon(CupertinoIcons.arrow_2_circlepath),
-                      // iconColor: Colors.,
                       prefixIconColor: Colors.white,
                       hintText: 'Select type',
                       hintStyle: const TextStyle(color: Colors.white54),
                       enabledBorder: OutlineInputBorder(
                         borderSide: const BorderSide(
-                          color: Color.fromARGB(255, 40, 43, 50),
-                        ),
+                            color: Color.fromARGB(255, 40, 43, 50)),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -273,8 +260,10 @@ class _TransactionsPageState extends State<TransactionsPage> {
                           ? brandLogos[_selectedBrand!]
                           : null;
 
-                      final provider = context.read<BalanceProvider>();
-                      final defaultCardId = provider.defaultCardId;
+                      final balanceProvider = context.read<BalanceProvider>();
+                      final notifProvider =
+                          context.read<NotificationProvider>();
+                      final defaultCardId = balanceProvider.defaultCardId;
 
                       if (defaultCardId == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -287,18 +276,16 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       TransactionModel transactionModel;
 
                       if (transaction != null) {
-                        // Editing existing transaction
                         transactionModel = transaction.copyWith(
                           place: place,
                           amount: amount,
                           logoPath: logoPath,
                           type: isIncome ? 'income' : 'expense',
                         );
-                        provider.updateTransaction(
+                        balanceProvider.updateTransaction(
                             defaultCardId, transactionModel);
                         await dbManager.updateTransaction(transactionModel);
                       } else {
-                        // New transaction
                         transactionModel = TransactionModel(
                           email: widget.email,
                           place: place,
@@ -309,17 +296,13 @@ class _TransactionsPageState extends State<TransactionsPage> {
                           type: isIncome ? 'income' : 'expense',
                         );
 
-                        provider.addTransaction(
+                        // ✅ Use provider logic here
+                        balanceProvider.addTransaction(
                             defaultCardId, transactionModel);
                         await dbManager.insertTransaction(transactionModel);
 
-                        final notifProvider =
-                            context.read<NotificationProvider>();
-
-                        // ---------------- Notifications ----------------
-
+                        // 🧠 Notifications logic
                         if (isIncome) {
-                          // High income if > 500
                           if (amountValue > 500) {
                             notifProvider
                                 .addHighIncomeNotification(amountValue);
@@ -327,19 +310,21 @@ class _TransactionsPageState extends State<TransactionsPage> {
                             notifProvider.addIncomeNotification(amountValue);
                           }
                         } else {
-                          // Récupérer la carte
-                          final card =
-                              await dbManager.getCardById(defaultCardId);
-                          final currentBalance = card?.amount ?? 0.0;
+                          final currentBalance =
+                              balanceProvider.totalBalance(defaultCardId);
 
-                          // Calculer le solde après la transaction
-                          final newBalance = currentBalance -
-                              amountValue; // car c'est une dépense
-
-                          // Vérifier si le nouveau solde est en dessous du seuil
-                          if (newBalance < (card?.threshold ?? 100.0)) {
+                          if (currentBalance <
+                              (balanceProvider.cards
+                                      .firstWhere((c) => c.id == defaultCardId)
+                                      .threshold ??
+                                  100.0)) {
                             notifProvider.addLowBalanceNotification(
-                                newBalance, card?.threshold ?? 100.0);
+                              currentBalance,
+                              balanceProvider.cards
+                                      .firstWhere((c) => c.id == defaultCardId)
+                                      .threshold ??
+                                  100.0,
+                            );
                           } else {
                             notifProvider.addExpenseNotification(
                                 amountValue, place);
@@ -347,7 +332,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
                         }
                       }
 
-                      // Close dialog and reset inputs
                       if (mounted) Navigator.pop(context);
                       _placeController.clear();
                       _amountController.clear();
@@ -382,6 +366,16 @@ class _TransactionsPageState extends State<TransactionsPage> {
             style: TextStyle(color: Colors.white)),
         automaticallyImplyLeading: false,
         backgroundColor: const Color(0xff181a1e),
+        // actions: [
+        //   IconButton(
+        //       onPressed: () {
+        //         Navigator.push(context, MaterialPageRoute(builder: (context)=>))
+        //       },
+        //       icon: Icon(
+        //         CupertinoIcons.right_chevron,
+        //         color: Colors.white70,
+        //       ))
+        // ],
       ),
       body: Column(
         children: [
@@ -395,8 +389,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       itemBuilder: (context, index) {
                         final t = _transactions[index];
                         return Padding(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 6), // espace entre transactions
+                          padding: const EdgeInsets.symmetric(vertical: 6),
                           child: Dismissible(
                             key: ValueKey(t.id),
                             background: Container(
@@ -409,21 +402,11 @@ class _TransactionsPageState extends State<TransactionsPage> {
                             ),
                             direction: DismissDirection.endToStart,
                             onDismissed: (direction) async {
-                              //remove from the database
                               await dbManager.deleteTransaction(t.id!);
-                              _loadTransactions();
-
-                              //remove from provider
                               if (provider.defaultCardId != null) {
                                 provider.removeTransaction(
                                     provider.defaultCardId!, t);
-                              } else {
-                                setState(() {
-                                  _transactions
-                                      .removeWhere((tx) => tx.id == t.id);
-                                });
                               }
-
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                     content: Text('Transaction deleted!')),

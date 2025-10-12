@@ -78,7 +78,7 @@ class NotificationProvider extends ChangeNotifier {
       AppNotification.create(
         title: "Low balance warning!",
         description:
-            "Current balance : \$${currentBalance.toStringAsFixed(2)}\nBelow threshold:\$${threshold.toStringAsFixed(2)}.",
+            "Your balance is low: \$${currentBalance.toStringAsFixed(2)} (below threshold \$${threshold.toStringAsFixed(2)}).",
         type: NotificationType.lowBalance,
       ),
     );

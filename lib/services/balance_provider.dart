@@ -1,4 +1,5 @@
 import 'package:expenses_tracker/models/cards.dart';
+import 'package:expenses_tracker/services/notification_provider.dart';
 import 'package:flutter/material.dart';
 
 import 'package:expenses_tracker/models/transactions.dart';
@@ -132,5 +133,20 @@ class BalanceProvider extends ChangeNotifier {
     final transactionsSum = transactions.fold(0.0, (sum, t) => sum + t.amount);
 //and give back the calculated amount
     return baseAmount + transactionsSum;
+  }
+  // ---- LOW BALANCE CHECK ----
+
+  void _checkLowBalance(int cardId, NotificationProvider notifProvider) {
+    final card = _cards.firstWhere(
+      (c) => c.id == cardId,
+      orElse: () => CardModel.empty(),
+    );
+
+    final balance = totalBalance(cardId);
+    const double threshold = 50.0; // Customize this per user/card
+
+    if (balance < threshold) {
+      notifProvider.addLowBalanceNotification(balance, threshold);
+    }
   }
 }
