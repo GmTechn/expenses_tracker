@@ -3,6 +3,7 @@ class CardModel {
   final String email;
   final double amount;
   final String cardnumber;
+  final double threshold; // Low balance threshold
   final String expirydate;
   final String username;
   final int colorOne;
@@ -14,6 +15,7 @@ class CardModel {
     required this.email,
     required this.amount,
     required this.cardnumber,
+    this.threshold = 100.0,
     required this.expirydate,
     required this.username,
     required this.colorOne,
@@ -53,6 +55,7 @@ class CardModel {
     );
   }
 
+//==== Empty card model when login for the first time =====
   static CardModel empty() {
     return CardModel(
       id: -1,
@@ -64,6 +67,33 @@ class CardModel {
       colorOne: 0,
       colorTwo: 0,
       isDefault: 0,
+    );
+  }
+
+  // === copy with method ===
+  CardModel copyWith({
+    int? id,
+    String? email,
+    double? amount,
+    String? cardnumber,
+    String? expirydate,
+    String? username,
+    int? colorOne,
+    int? colorTwo,
+    int? isDefault,
+    double? threshold,
+  }) {
+    return CardModel(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      amount: amount ?? this.amount,
+      cardnumber: cardnumber ?? this.cardnumber,
+      expirydate: expirydate ?? this.expirydate,
+      username: username ?? this.username,
+      colorOne: colorOne ?? this.colorOne,
+      colorTwo: colorTwo ?? this.colorTwo,
+      isDefault: isDefault ?? this.isDefault,
+      threshold: threshold ?? this.threshold,
     );
   }
 }

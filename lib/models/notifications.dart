@@ -1,4 +1,14 @@
-enum NotificationType { transaction, system, alert, newCard, budgetGoal }
+enum NotificationType {
+  transaction, // Default for normal transactions
+  system, // General system updates
+  alert, // Warnings or errors
+  newCard, // When a new card is added
+  highExpense, // When spending is high
+  incomeAdded, // When income is recorded
+  balanceUpdated, // When balance changes significantly
+  cardRemoved, // When a card is deleted
+  lowBalance, // calculating low balance for treshold
+}
 
 class AppNotification {
   final String id;

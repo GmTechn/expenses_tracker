@@ -116,7 +116,7 @@ class NotificationsPage extends StatelessWidget {
                                 ),
                               ),
                               trailing: Text(
-                                '${n.date.day}/${n.date.month}/${n.date.year}\n${n.date.hour.toString().padLeft(2, '0')}:${n.date.minute.toString().padLeft(2, '0')}',
+                                '${n.date?.day}/${n.date?.month}/${n.date?.year}\n${n.date?.hour.toString().padLeft(2, '0')}:${n.date.minute.toString().padLeft(2, '0')}',
                                 textAlign: TextAlign.end,
                                 style: const TextStyle(
                                   color: Colors.white54,

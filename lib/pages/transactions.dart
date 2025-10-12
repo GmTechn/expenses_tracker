@@ -1,5 +1,6 @@
 import 'package:expenses_tracker/models/transactions.dart';
 import 'package:expenses_tracker/services/balance_provider.dart';
+import 'package:expenses_tracker/services/notification_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:expenses_tracker/components/mynavbar.dart';
@@ -167,7 +168,8 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     decoration: InputDecoration(
                       fillColor: const Color.fromARGB(255, 40, 43, 50),
                       filled: true,
-                      prefixIcon: Icon(CupertinoIcons.tag),
+                      prefixIcon: const Icon(CupertinoIcons.tag),
+
                       // iconColor: Colors.,
                       prefixIconColor: Colors.white,
                       hintText: 'Select Brand',
@@ -219,7 +221,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     decoration: InputDecoration(
                       fillColor: const Color.fromARGB(255, 40, 43, 50),
                       filled: true,
-                      prefixIcon: Icon(CupertinoIcons.arrow_2_circlepath),
+                      prefixIcon: const Icon(CupertinoIcons.arrow_2_circlepath),
                       // iconColor: Colors.,
                       prefixIconColor: Colors.white,
                       hintText: 'Select type',
@@ -275,7 +277,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       final defaultCardId = provider.defaultCardId;
 
                       if (defaultCardId == null) {
-                        // Optionnel : message d'erreur si aucune carte par défaut
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text('Please set a default card first')),
@@ -286,7 +287,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       TransactionModel transactionModel;
 
                       if (transaction != null) {
-                        // Modification d'une transaction existante
+                        // Editing existing transaction
                         transactionModel = transaction.copyWith(
                           place: place,
                           amount: amount,
@@ -297,7 +298,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                             defaultCardId, transactionModel);
                         await dbManager.updateTransaction(transactionModel);
                       } else {
-                        // Nouvelle transaction
+                        // New transaction
                         transactionModel = TransactionModel(
                           email: widget.email,
                           place: place,
@@ -307,28 +308,47 @@ class _TransactionsPageState extends State<TransactionsPage> {
                           cardId: defaultCardId,
                           type: isIncome ? 'income' : 'expense',
                         );
+
                         provider.addTransaction(
                             defaultCardId, transactionModel);
                         await dbManager.insertTransaction(transactionModel);
-                        final notifProvider =
-                            context.read<notif_service.NotificationProvider>();
 
-                        notifProvider.addNotification(
-                          AppNotification(
-                            id: DateTime.now()
-                                .millisecondsSinceEpoch
-                                .toString(),
-                            title: isIncome ? 'Income Added' : 'Expense Added',
-                            description:
-                                '${_placeController.text} - \$${_amountController.text}',
-                            date: DateTime.now(),
-                            read: false,
-                            type: NotificationType.transaction,
-                          ),
-                        );
+                        final notifProvider =
+                            context.read<NotificationProvider>();
+
+                        // ---------------- Notifications ----------------
+
+                        if (isIncome) {
+                          // High income if > 500
+                          if (amountValue > 500) {
+                            notifProvider
+                                .addHighIncomeNotification(amountValue);
+                          } else {
+                            notifProvider.addIncomeNotification(amountValue);
+                          }
+                        } else {
+                          // Récupérer la carte
+                          final card =
+                              await dbManager.getCardById(defaultCardId);
+                          final currentBalance = card?.amount ?? 0.0;
+
+                          // Calculer le solde après la transaction
+                          final newBalance = currentBalance -
+                              amountValue; // car c'est une dépense
+
+                          // Vérifier si le nouveau solde est en dessous du seuil
+                          if (newBalance < (card?.threshold ?? 100.0)) {
+                            notifProvider.addLowBalanceNotification(
+                                newBalance, card?.threshold ?? 100.0);
+                          } else {
+                            notifProvider.addExpenseNotification(
+                                amountValue, place);
+                          }
+                        }
                       }
 
-                      Navigator.pop(context);
+                      // Close dialog and reset inputs
+                      if (mounted) Navigator.pop(context);
                       _placeController.clear();
                       _amountController.clear();
                       _selectedBrand = null;

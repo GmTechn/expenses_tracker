@@ -6,6 +6,7 @@ import 'package:expenses_tracker/components/mytextfield.dart';
 import 'package:expenses_tracker/services/balance_provider.dart';
 import 'package:expenses_tracker/management/database.dart';
 import 'package:expenses_tracker/models/cards.dart';
+import 'package:expenses_tracker/services/notification_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -234,6 +235,9 @@ class _MyCardsPageState extends State<MyCardsPage> {
                           expiryController.text.isNotEmpty &&
                           usernameController.text.isNotEmpty) {
                         final provider = context.read<BalanceProvider>();
+                        final notifProvider =
+                            context.read<NotificationProvider>();
+
                         final newCard = CardModel(
                           id: card?.id,
                           email: widget.email,
@@ -248,20 +252,26 @@ class _MyCardsPageState extends State<MyCardsPage> {
 
                         if (card == null) {
                           await _databaseManager.insertCard(newCard);
+                          notifProvider.addNewCardNotification();
                         } else {
                           await _databaseManager.updateCard(newCard);
+                          notifProvider.addCardRemoveNotification(
+                            newCard.cardnumber
+                                .substring(newCard.cardnumber.length - 4),
+                          );
                         }
 
-                        // ✅ Pop the dialog first
                         if (mounted) Navigator.of(ctx).pop();
-
-                        // ✅ Then reload the cards
                         await _loadCards();
                       }
                     },
-                    child: Text(card == null ? "Add" : "Save",
-                        style: const TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      card == null ? "Add" : "Save",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -304,10 +314,10 @@ class _MyCardsPageState extends State<MyCardsPage> {
                       context: context,
                       builder: (_) => AlertDialog(
                         backgroundColor: const Color(0xff181a1e),
-                        title: Text(
+                        title: const Text(
                           'Confirm',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -352,12 +362,25 @@ class _MyCardsPageState extends State<MyCardsPage> {
                     );
                   },
                   onDismissed: (direction) async {
-                    // Supprimer la carte de la DB et du provider
+                    // ✅ Récupérer les 4 derniers chiffres avant suppression
+                    final last4 =
+                        card.cardnumber.substring(card.cardnumber.length - 4);
+
+                    // ✅ Supprimer la carte de la DB
                     await _databaseManager.deleteCard(card.id!);
+
+                    // ✅ Supprimer de la liste locale
                     _userCards.removeAt(i);
+
+                    // ✅ Mettre à jour le provider de solde
                     final provider = context.read<BalanceProvider>();
                     provider.setCards(_userCards);
+
+                    // ✅ Ajouter une notification de suppression
+                    final notifProvider = context.read<NotificationProvider>();
+                    notifProvider.addCardRemoveNotification(last4);
                   },
+
                   child: GestureDetector(
                     onTap: () => _cardAddEditDialog(card: card),
                     child: Column(

@@ -2,29 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:expenses_tracker/models/notifications.dart';
 
 class NotificationProvider extends ChangeNotifier {
+  // List of all notifications
   final List<AppNotification> _notifications = [];
 
-  /// Notifications triées par date (récente d’abord)
+  // Get all notifications sorted by date
   List<AppNotification> get allNotifications =>
       _notifications..sort((a, b) => b.date.compareTo(a.date));
 
-  /// Nombre de notifications non lues
+  // Count of unread notifications
   int get unreadCount => _notifications.where((n) => !n.read).length;
 
-  /// Ajouter une notification
+  // Add a notification
   void addNotification(AppNotification notification) {
     _notifications.add(notification);
     notifyListeners();
   }
 
-  /// Marquer une notification spécifique comme lue
+  // Mark a notification as read
   void markAsRead(String id) {
     final notif = _notifications.firstWhere((n) => n.id == id);
     notif.read = true;
     notifyListeners();
   }
 
-  /// Tout marquer comme lu
+  // Mark all notifications as read
   void markAllAsRead() {
     for (var n in _notifications) {
       n.read = true;
@@ -32,35 +33,80 @@ class NotificationProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Supprimer une notification
+  // Delete a notification
   void deleteNotification(String id) {
     _notifications.removeWhere((n) => n.id == id);
     notifyListeners();
   }
 
-  /// Helpers — types de notifs rapides
+  // ---- Transaction Notifications ----
+
+  void addIncomeNotification(double amount) {
+    addNotification(
+      AppNotification.create(
+        title: "Income",
+        description:
+            "Income added to your account - \$${amount.toStringAsFixed(2)}.",
+        type: NotificationType.incomeAdded,
+      ),
+    );
+  }
+
+  void addHighIncomeNotification(double amount) {
+    addNotification(
+      AppNotification.create(
+        title: "High income alert!",
+        description: "High income recorded - \$${amount.toStringAsFixed(2)}!",
+        type: NotificationType.highExpense,
+      ),
+    );
+  }
+
+  void addExpenseNotification(double amount, String place) {
+    addNotification(
+      AppNotification.create(
+        title: "Expense",
+        description:
+            "Expense from $place added - \$${amount.toStringAsFixed(2)}.",
+        type: NotificationType.transaction,
+      ),
+    );
+  }
+
+  void addLowBalanceNotification(double currentBalance, double threshold) {
+    addNotification(
+      AppNotification.create(
+        title: "Low balance warning!",
+        description:
+            "Current balance : \$${currentBalance.toStringAsFixed(2)}\nBelow threshold:\$${threshold.toStringAsFixed(2)}.",
+        type: NotificationType.lowBalance,
+      ),
+    );
+  }
+
+  // ---- Card Notifications ----
+
   void addNewCardNotification() {
-    addNotification(AppNotification.create(
-      title: "New Card Added!",
-      description: "Your new debit card has been successfully added.",
-      type: NotificationType.newCard,
-    ));
+    addNotification(
+      AppNotification(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        title: 'A new card was added!',
+        description: 'Your new debit card is now active.',
+        type: NotificationType.newCard,
+        date: DateTime.now(),
+      ),
+    );
   }
 
-  void addTransactionNotification(double amount) {
-    addNotification(AppNotification.create(
-      title: "Transaction Recorded",
-      description:
-          "A new transaction of \$${amount.toStringAsFixed(2)} has been added to your account.",
-      type: NotificationType.transaction,
-    ));
-  }
-
-  void addBudgetGoalReachedNotification() {
-    addNotification(AppNotification.create(
-      title: "Budget Goal Reached!",
-      description: "Congratulations! You've reached your budget goal.",
-      type: NotificationType.budgetGoal,
-    ));
+  void addCardRemoveNotification(String last4) {
+    addNotification(
+      AppNotification(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        title: 'Card removed successfully',
+        description: 'Your card ending in ****$last4 has been deleted.',
+        type: NotificationType.cardRemoved,
+        date: DateTime.now(),
+      ),
+    );
   }
 }
