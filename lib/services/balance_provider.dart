@@ -149,4 +149,9 @@ class BalanceProvider extends ChangeNotifier {
       notifProvider.addLowBalanceNotification(balance, threshold);
     }
   }
+
+  // ---- GET ALL TRANSACTIONS ----
+  List<TransactionModel> get allTransactions {
+    return _cardTransactions.values.expand((list) => list).toList();
+  }
 }

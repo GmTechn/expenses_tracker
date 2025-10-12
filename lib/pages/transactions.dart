@@ -1,4 +1,5 @@
 import 'package:expenses_tracker/models/transactions.dart';
+import 'package:expenses_tracker/pages/chartspage.dart';
 import 'package:expenses_tracker/services/balance_provider.dart';
 import 'package:expenses_tracker/services/notification_provider.dart';
 import 'package:flutter/cupertino.dart';
@@ -366,16 +367,23 @@ class _TransactionsPageState extends State<TransactionsPage> {
             style: TextStyle(color: Colors.white)),
         automaticallyImplyLeading: false,
         backgroundColor: const Color(0xff181a1e),
-        // actions: [
-        //   IconButton(
-        //       onPressed: () {
-        //         Navigator.push(context, MaterialPageRoute(builder: (context)=>))
-        //       },
-        //       icon: Icon(
-        //         CupertinoIcons.right_chevron,
-        //         color: Colors.white70,
-        //       ))
-        // ],
+        actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChartsPage(
+                      selectedDate: DateTime.now(),
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(
+                CupertinoIcons.right_chevron,
+                color: Colors.white70,
+              ))
+        ],
       ),
       body: Column(
         children: [
